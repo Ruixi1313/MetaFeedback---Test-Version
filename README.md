@@ -1,7 +1,6 @@
 # Meta-Feedback UI
 
-A minimal web interface for collecting and generating **process-oriented meta-feedback** for algorithm assignments.  
-Built with **FastAPI (backend)** and a lightweight **HTML/JS frontend**, designed for educational research and classroom studies.
+A minimal web interface for collecting and generating process oriented meta-feedback for algorithm assignments.  
 
 ## Features
 - Simple sign-up and login system (SQLite-based)
