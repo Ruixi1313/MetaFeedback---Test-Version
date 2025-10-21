@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Meta-Feedback System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans'; }
+    .shadow-soft { box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+    .hidden { display: none; }
+    pre { white-space: pre-wrap; }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-b from-white to-slate-50">
+  <!-- Auth -->
+  <div id="auth-page" class="min-h-screen flex items-center justify-center p-6">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-soft p-8 w-full max-w-md">
+      <h1 class="text-3xl font-bold text-center mb-6">Meta-Feedback System</h1>
+
+      <div id="login-form">
+        <h2 class="text-xl font-semibold mb-4">Login</h2>
+        <div class="space-y-3">
+          <input id="login-username" type="text" placeholder="Username" class="w-full border rounded-xl px-4 py-2" />
+          <div class="relative">
+            <input id="login-password" type="password" placeholder="Password" class="w-full border rounded-xl px-4 py-2 pr-12" />
+            <button type="button" onclick="togglePassword('login-password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </button>
+          </div>
+          <button id="btn-login" class="w-full px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">Login</button>
+        </div>
+        <p class="text-center mt-4 text-sm text-slate-600">
+          Don't have an account? <button id="show-signup" class="text-emerald-600 hover:underline">Sign up</button>
+        </p>
+      </div>
+
+      <div id="signup-form" class="hidden">
+        <h2 class="text-xl font-semibold mb-4">Sign Up</h2>
+        <div class="space-y-3">
+          <input id="signup-username" type="text" placeholder="Username" class="w-full border rounded-xl px-4 py-2" />
+          <div class="relative">
+            <input id="signup-password" type="password" placeholder="Password" class="w-full border rounded-xl px-4 py-2 pr-12" />
+            <button type="button" onclick="togglePassword('signup-password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </button>
+          </div>
+          <button id="btn-signup" class="w-full px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">Sign Up</button>
+        </div>
+        <p class="text-center mt-4 text-sm text-slate-600">
+          Already have an account? <button id="show-login" class="text-emerald-600 hover:underline">Login</button>
+        </p>
+      </div>
+
+      <div id="auth-error" class="hidden mt-4 p-3 rounded-lg bg-red-50 text-red-700 text-sm"></div>
+    </div>
+  </div>
+
+  <!-- User -->
+  <div id="user-page" class="hidden p-6 md:p-10 mx-auto max-w-6xl space-y-6">
+    <header class="flex items-center justify-between">
+      <div>
+        <h1 class="text-3xl md:text-4xl font-bold tracking-tight">Meta-Feedback — Algorithms</h1>
+        <p class="text-slate-600 mt-2">Welcome, <span id="user-name" class="font-semibold"></span></p>
+      </div>
+      <button id="btn-logout" class="px-4 py-2 rounded-xl border hover:bg-slate-50">Logout</button>
+    </header>
+
+    <div class="flex items-center gap-3 flex-wrap">
+      <div class="flex items-center gap-2">
+        <label class="text-sm text-slate-600">Assignment</label>
+        <select id="assignment" class="border rounded-xl px-3 py-2 bg-white shadow-soft">
+          <option>Assignment 1</option>
+          <option>Assignment 2</option>
+          <option>Assignment 3</option>
+          <option>Assignment 4</option>
+        </select>
+      </div>
+      <div class="flex items-center gap-2">
+        <label class="text-sm text-slate-600">Domain</label>
+        <select id="domain" class="border rounded-xl px-3 py-2 bg-white shadow-soft">
+          <option>Sorting</option>
+          <option>Graph (BFS/DFS)</option>
+          <option>Dynamic Programming</option>
+          <option>Greedy</option>
+          <option>Divide & Conquer / Binary Search</option>
+          <option>Strings (KMP/Rabin-Karp)</option>
+        </select>
+      </div>
+    </div>
+
+    <main class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <section class="bg-white rounded-2xl border border-slate-200 shadow-soft p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <h2 class="font-semibold">DESIGN_PLAN.md</h2>
+          <span class="text-xs px-2 py-1 rounded-full bg-slate-100 border">Design</span>
+        </div>
+        <textarea id="plan" class="min-h-[180px] w-full border rounded-xl p-3" placeholder="Describe algorithms, complexity, correctness sketch, assumptions, and test plan."></textarea>
+      </section>
+
+      <section class="bg-white rounded-2xl border border-slate-200 shadow-soft p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <h2 class="font-semibold">Code (Python)</h2>
+          <span class="text-xs px-2 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700">Implementation</span>
+        </div>
+        <textarea id="code" class="min-h-[180px] w-full border rounded-xl p-3 font-mono" placeholder="Paste Python code here"></textarea>
+      </section>
+
+      <section class="bg-white rounded-2xl border border-slate-200 shadow-soft p-4 space-y-3 md:col-span-2">
+        <div class="flex items-center justify-between">
+          <h2 class="font-semibold">Tests (/tests)</h2>
+        </div>
+        <textarea id="tests" class="min-h-[140px] w-full border rounded-xl p-3 font-mono" placeholder="Describe or paste tests"></textarea>
+      </section>
+    </main>
+
+    <div class="flex items-center gap-3">
+      <button id="btn-submit" class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">Submit Assignment</button>
+      <button id="btn-generate" class="hidden px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">Generate AI Feedback</button>
+      <button id="btn-survey" class="hidden px-4 py-2 rounded-xl bg-purple-600 text-white hover:bg-purple-700">Complete Survey</button>
+      <button id="btn-history" class="px-4 py-2 rounded-xl bg-slate-600 text-white hover:bg-slate-700">See Submission History</button>
+      <button id="btn-copy" class="px-4 py-2 rounded-xl border hover:bg-slate-50">Copy JSON</button>
+    </div>
+
+    <section id="output" class="hidden bg-white rounded-2xl border border-slate-200 shadow-soft p-5 space-y-4">
+      <h3 class="text-xl font-semibold">AI Meta-Feedback</h3>
+
+      <div>
+        <h4 class="font-semibold mb-1">Score explanation</h4>
+        <p id="score" class="text-slate-700"></p>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <div>
+          <h4 class="font-semibold mb-2">Findings</h4>
+          <ul id="findings" class="list-disc pl-5 text-sm space-y-1"></ul>
+        </div>
+        <div>
+          <h4 class="font-semibold mb-2">Gaps</h4>
+          <ul id="gaps" class="list-disc pl-5 text-sm space-y-1"></ul>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <div>
+          <h4 class="font-semibold mb-2">Suggestions</h4>
+          <ul id="suggestions" class="list-disc pl-5 text-sm space-y-1"></ul>
+        </div>
+        <div>
+          <h4 class="font-semibold mb-2">Test feedback</h4>
+          <ul id="testfb" class="list-disc pl-5 text-sm space-y-1"></ul>
+        </div>
+      </div>
+
+      <div>
+        <h4 class="font-semibold mb-2">Code feedback</h4>
+        <ul id="codefb" class="list-disc pl-5 text-sm space-y-1"></ul>
+      </div>
+
+      <div>
+        <h4 class="font-semibold mb-2">Summary</h4>
+        <p id="summary" class="text-slate-700"></p>
+      </div>
+
+      <div id="last-md" class="text-xs text-slate-500"></div>
+      <!-- Restored feedback block -->
+      <div id="restored-block" class="hidden">
+        <h4 class="font-semibold mb-2">Last feedback (restored)</h4>
+        <pre id="restored-md" class="text-sm text-slate-800 bg-slate-50 border rounded-lg p-3 overflow-auto"></pre>
+      </div>
+    </section>
+
+    <!-- History Modal -->
+    <div id="history-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-soft p-6 w-full max-w-4xl max-h-[80vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-2xl font-bold">Submission History</h3>
+          <button id="close-history" class="text-slate-500 hover:text-slate-700 text-2xl">&times;</button>
+        </div>
+        
+        <div>
+          <h4 class="text-lg font-semibold mb-3 text-blue-600">Your Submissions</h4>
+          <div id="submissions-history" class="space-y-3 max-h-96 overflow-y-auto">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Admin -->
+  <div id="admin-page" class="hidden p-6 md:p-10 mx-auto max-w-7xl space-y-6">
+    <header class="flex items-center justify-between">
+      <div>
+        <h1 class="text-3xl md:text-4xl font-bold tracking-tight">Admin Dashboard</h1>
+        <p class="text-slate-600 mt-2">Manage users and submissions</p>
+      </div>
+      <button id="btn-admin-logout" class="px-4 py-2 rounded-xl border hover:bg-slate-50">Logout</button>
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <section class="bg-white rounded-2xl border border-slate-200 shadow-soft p-5">
+        <h2 class="text-xl font-semibold mb-4">Users</h2>
+        <div id="users-list" class="space-y-2"></div>
+      </section>
+
+      <section class="bg-white rounded-2xl border border-slate-200 shadow-soft p-5">
+        <h2 class="text-xl font-semibold mb-4">Recent Submissions</h2>
+        <div id="submissions-list" class="space-y-3 max-h-[600px] overflow-y-auto"></div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = '';
+    const $ = (id) => document.getElementById(id);
+    const li = (txt) => { const el = document.createElement('li'); el.textContent = txt; return el; };
+
+    // Event logging utility
+    async function logEvent(eventType, assignment = null, domain = null, details = null) {
+      if (!token) return;
+      try {
+        await fetch(`${API_URL}/log-event`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ event_type: eventType, assignment, domain, details })
+        });
+      } catch (e) {
+        console.warn('Failed to log event:', e);
+      }
+    }
+
+    // History modal functions
+    async function showHistory() {
+      $('history-modal').classList.remove('hidden');
+      await loadSubmissionsHistory();
+    }
+
+    function hideHistory() {
+      $('history-modal').classList.add('hidden');
+    }
+
+    async function loadSubmissionsHistory() {
+      try {
+        const res = await fetch(`${API_URL}/my-submissions`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const submissions = await res.json();
+        const container = $('submissions-history');
+        container.innerHTML = '';
+        
+        if (submissions.length === 0) {
+          container.innerHTML = '<p class="text-slate-500 text-center py-4">No Submission Record</p>';
+          return;
+        }
+        
+        submissions.forEach(sub => {
+          const el = document.createElement('div');
+          el.className = 'p-3 rounded-lg border bg-slate-50';
+          const time = new Date(sub.timestamp).toLocaleString();
+          el.innerHTML = `
+            <div class="flex items-start justify-between mb-2">
+              <div>
+                <span class="font-medium text-slate-900">${sub.assignment}</span>
+                <span class="ml-2 text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700">${sub.domain}</span>
+              </div>
+              <span class="text-xs text-slate-500">${time}</span>
+            </div>
+            <div class="text-sm text-slate-600">
+              <div><strong>Plan:</strong> ${(sub.plan || 'N/A').substring(0, 100)}${(sub.plan || '').length > 100 ? '...' : ''}</div>
+              <div><strong>Code:</strong> ${(sub.code || 'N/A').substring(0, 100)}${(sub.code || '').length > 100 ? '...' : ''}</div>
+              <div><strong>Tests:</strong> ${(sub.tests || 'N/A').substring(0, 100)}${(sub.tests || '').length > 100 ? '...' : ''}</div>
+            </div>
+          `;
+          container.appendChild(el);
+        });
+      } catch (e) {
+        console.error('Failed to load submissions history:', e);
+        $('submissions-history').innerHTML = '<p class="text-red-500 text-center py-4">Error loading submissions</p>';
+      }
+    }
+
+
+    function togglePassword(inputId, button) {
+      const input = document.getElementById(inputId);
+      const eye = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" ...></svg>';
+      const eyeOff = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" ...></svg>';
+      if (input.type === 'password') { input.type = 'text'; button.innerHTML = eyeOff; }
+      else { input.type = 'password'; button.innerHTML = eye; }
+    }
+
+    let token = localStorage.getItem('token');
+    let username = localStorage.getItem('username');
+    let isAdmin = localStorage.getItem('isAdmin') === 'true';
+
+    // Draft persistence 
+    function draftPayload() {
+      return {
+        assignment: $('assignment').value,  
+        domain: $('domain').value,          
+        plan: $('plan').value || null,
+        code: $('code').value || null,
+        tests: $('tests').value || null,
+      };
+    }
+
+
+    async function loadDraft() {
+      try {
+        const a = $('assignment').value;
+        const d = $('domain').value;
+        console.log('Loading draft for:', a, d); // Debug log
+        const res = await fetch(`${API_URL}/draft/me?assignment=${encodeURIComponent(a)}&domain=${encodeURIComponent(d)}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        console.log('Draft response status:', res.status); // Debug log
+        if (!res.ok) {
+          console.log('No draft found or error:', res.status, await res.text());
+          return;
+        }
+        const data = await res.json();
+        console.log('Draft data:', data); // Debug log
+
+        if (data.plan != null)  $('plan').value = data.plan;
+        if (data.code != null)  $('code').value = data.code;
+        if (data.tests != null) $('tests').value = data.tests;
+
+        if (data.feedback_md && data.feedback_md.trim().length > 0) {
+          $('output').classList.remove('hidden');
+          $('restored-block').classList.remove('hidden');
+          $('restored-md').textContent = data.feedback_md;
+          $('last-md').textContent = ''; 
+        } else {
+          $('restored-block').classList.add('hidden');
+          $('restored-md').textContent = '';
+        }
+      } catch (e) {
+        console.warn('loadDraft failed', e);
+      }
+    }
+
+
+    let _saveTimer;
+    function debounceSave() {
+      clearTimeout(_saveTimer);
+      _saveTimer = setTimeout(() => saveDraft(), 600);
+    }
+
+    async function saveDraft() {
+      if (!token) return;
+      const body = JSON.stringify(draftPayload());
+      try {
+        // 先试 POST（常见实现）
+        let res = await fetch(`${API_URL}/draft/me`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body
+        });
+        if (!res.ok && res.status === 405) {
+          // 如果后端只接受 PUT，就回退到 PUT
+          res = await fetch(`${API_URL}/draft/me`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body
+          });
+        }
+        if (!res.ok) console.warn('saveDraft failed', await res.text());
+      } catch (e) {
+        console.warn('saveDraft error', e);
+      }
+    }
+
+    // Add event listeners for auto-save
+    ['plan','code','tests'].forEach(id => {
+      $(id).addEventListener('input', debounceSave);
+    });
+
+    // Add event listeners for assignment/domain changes to reload draft
+    $('assignment').addEventListener('change', async () => {
+      await loadDraft();
+      logEvent('switch_assignment', $('assignment').value, $('domain').value);
+    });
+    $('domain').addEventListener('change', async () => {
+      await loadDraft();
+      logEvent('switch_assignment', $('assignment').value, $('domain').value);
+    });
+
+    // Auth 
+    async function login() {
+      const user = $('login-username').value;
+      const pass = $('login-password').value;
+      try {
+        const res = await fetch(`${API_URL}/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: user, password: pass })
+        });
+        if (!res.ok) throw new Error('Invalid credentials');
+        const data = await res.json();
+        token = data.access_token; username = data.username; isAdmin = data.is_admin;
+        localStorage.setItem('token', token);
+        localStorage.setItem('username', username);
+        localStorage.setItem('isAdmin', isAdmin);
+        showDashboard();
+      } catch (e) {
+        $('auth-error').textContent = e.message;
+        $('auth-error').classList.remove('hidden');
+      }
+    }
+
+    async function signup() {
+      const user = $('signup-username').value;
+      const pass = $('signup-password').value;
+      if (!user || !pass) {
+        $('auth-error').textContent = 'Please enter username and password';
+        $('auth-error').classList.remove('hidden');
+        return;
+      }
+      try {
+        const res = await fetch(`${API_URL}/signup`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: user, password: pass })
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || 'Signup failed');
+        }
+        const data = await res.json();
+        token = data.access_token; username = data.username; isAdmin = data.is_admin;
+        localStorage.setItem('token', token);
+        localStorage.setItem('username', username);
+        localStorage.setItem('isAdmin', isAdmin);
+        showDashboard();
+      } catch (e) {
+        $('auth-error').textContent = e.message;
+        $('auth-error').classList.remove('hidden');
+      }
+    }
+
+    function logout() {
+      localStorage.clear();
+      token = null; username = null; isAdmin = false;
+      $('auth-page').classList.remove('hidden');
+      $('user-page').classList.add('hidden');
+      $('admin-page').classList.add('hidden');
+    }
+
+    async function showDashboard() {
+      $('auth-page').classList.add('hidden');
+      if (isAdmin) {
+        $('admin-page').classList.remove('hidden');
+        loadAdminData();
+      } else {
+        $('user-page').classList.remove('hidden');
+        $('user-name').textContent = username;
+        await loadDraft();          // <-- restore from server on entry
+        await checkFeedbackStatus();
+        
+        // Log view_feedback if feedback is visible
+        if (!$('output').classList.contains('hidden')) {
+          logEvent('view_feedback', $('assignment').value, $('domain').value);
+        }
+      }
+    }
+
+    // Student actions
+    async function submitAssignment() {
+      const payload = {
+        assignment: $('assignment').value,
+        domain: $('domain').value,
+        plan: $('plan').value,
+        code: $('code').value,
+        tests: $('tests').value
+      };
+      try {
+        const res = await fetch(`${API_URL}/submit`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) throw new Error('Submission failed');
+        alert('Assignment submitted successfully!');
+        await checkFeedbackStatus();
+      } catch (e) {
+        alert(e.message);
+      }
+    }
+
+    async function checkFeedbackStatus() {
+      try {
+        const res = await fetch(`${API_URL}/feedback-status`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        
+        if (data.enabled) {
+          // User has feedback enabled
+          if (data.feedback_count >= data.max_feedback) {
+            // Reached max feedback, show survey button, hide feedback button
+            $('btn-generate').classList.add('hidden');
+            $('btn-survey').classList.remove('hidden');
+          } else if (data.feedback_count > 0) {
+            // After 1st feedback, show both survey and feedback buttons
+            $('btn-generate').classList.remove('hidden');
+            $('btn-survey').classList.remove('hidden');
+            $('btn-generate').textContent = 'Get Meta-Feedback Again';
+          } else {
+            // First feedback, show only feedback button
+            $('btn-generate').classList.remove('hidden');
+            $('btn-survey').classList.add('hidden');
+            $('btn-generate').textContent = 'Generate AI Feedback';
+          }
+        } else {
+          // Survey mode, show survey button, hide feedback button
+          $('btn-generate').classList.add('hidden');
+          $('btn-survey').classList.remove('hidden');
+        }
+      } catch (e) { console.error('feedback-status', e); }
+    }
+
+    async function generateFeedback() {
+      const payload = {
+        assignment: $('assignment').value,
+        domain: $('domain').value,
+        plan: $('plan').value,
+        code: $('code').value,
+        tests: $('tests').value
+      };
+      $('btn-generate').disabled = true;
+      $('btn-generate').textContent = 'Analyzing...';
+      
+      // Log that user clicked generate (frontend event)
+      logEvent('generate_click', payload.assignment, payload.domain);
+      
+      try {
+        const res = await fetch(`${API_URL}/analyze`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || 'Analysis failed');
+        }
+        const data = await res.json();
+        renderFeedback(data);
+        window._lastJSON = data;
+        
+        // Log view_feedback when feedback is rendered
+        logEvent('view_feedback', payload.assignment, payload.domain);
+        
+        // Save the latest draft to persist content immediately
+        await saveDraft();
+        
+        // Refresh button status after successful feedback
+        await checkFeedbackStatus();
+      } catch (e) {
+        alert(e.message);
+      } finally {
+        $('btn-generate').disabled = false;
+      }
+    }
+
+    function renderFeedback(data) {
+      $('output').classList.remove('hidden');
+      $('score').textContent = data.score_explanation || '';
+      const sections = [
+        ['findings', data.findings || []],
+        ['gaps', data.gaps || []],
+        ['suggestions', data.suggestions || []],
+        ['codefb', data.code_feedback || []],
+        ['testfb', data.test_feedback || []],
+      ];
+      sections.forEach(([id, arr]) => {
+        const ul = $(id); ul.innerHTML = '';
+        (arr || []).forEach(x => ul.appendChild(li(x)));
+        if ((arr || []).length === 0) ul.appendChild(li('—'));
+      });
+      $('summary').textContent = data.summary || '';
+      $('last-md').textContent = ''; 
+    }
+
+    // Admin
+    async function loadAdminData() { await loadUsers(); await loadSubmissions(); }
+
+    async function loadUsers() {
+      try {
+        const res = await fetch(`${API_URL}/users`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const users = await res.json();
+        const container = $('users-list'); container.innerHTML = '';
+        users.forEach(user => {
+          if (user.username === 'admin') return;
+          const el = document.createElement('div');
+          el.className = 'flex items-center justify-between p-3 rounded-lg border bg-slate-50';
+          el.innerHTML = `
+            <div>
+              <span class="font-medium">${user.username}</span>
+              <span class="ml-2 text-xs px-2 py-1 rounded-full ${user.feedback_enabled ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}">
+                ${user.feedback_enabled ? 'Feedback Enabled' : 'Survey Mode'}
+              </span>
+            </div>
+            <label class="flex items-center gap-2 cursor-pointer">
+              <span class="text-sm text-slate-600">Enable Feedback</span>
+              <input type="checkbox" ${user.feedback_enabled ? 'checked' : ''} 
+                     onchange="toggleFeedback('${user.username}', this.checked)"
+                     class="w-5 h-5 rounded border-gray-300">
+            </label>`;
+          container.appendChild(el);
+        });
+      } catch (e) { console.error('loadUsers', e); }
+    }
+
+    async function loadSubmissions() {
+      try {
+        const res = await fetch(`${API_URL}/submissions`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const subs = await res.json();
+        const c = $('submissions-list'); c.innerHTML = '';
+        subs.sort((a,b)=> new Date(b.timestamp) - new Date(a.timestamp));
+        subs.forEach(sub => {
+          const wrap = document.createElement('div');
+          wrap.className = 'p-4 rounded-lg border bg-slate-50';
+          const time = new Date(sub.timestamp).toLocaleString();
+          wrap.innerHTML = `
+            <div class="flex items-start justify-between mb-2">
+              <div>
+                <span class="font-medium text-slate-900">${sub.username}</span>
+                <span class="ml-2 text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700">${sub.assignment}</span>
+              </div>
+              <span class="text-xs text-slate-500">${time}</span>
+            </div>
+            <div class="text-sm text-slate-600 mb-2"><strong>Domain:</strong> ${sub.domain}</div>
+            <details class="text-sm">
+              <summary class="cursor-pointer text-emerald-600 hover:text-emerald-700">View Details</summary>
+              <div class="mt-2 p-3 bg-white rounded border space-y-2">
+                <div><strong>Plan:</strong><br><pre class="text-xs mt-1">${sub.plan || 'N/A'}</pre></div>
+                <div><strong>Code:</strong><br><pre class="text-xs mt-1 font-mono">${sub.code || 'N/A'}</pre></div>
+                <div><strong>Tests:</strong><br><pre class="text-xs mt-1 font-mono">${sub.tests || 'N/A'}</pre></div>
+              </div>
+            </details>`;
+          c.appendChild(wrap);
+        });
+        if (subs.length === 0) c.innerHTML = '<p class="text-slate-500 text-center py-4">No submissions yet</p>';
+      } catch (e) { console.error('loadSubmissions', e); }
+    }
+
+    async function toggleFeedback(user, enabled) {
+      try {
+        const res = await fetch(`${API_URL}/admin/toggle-feedback`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ username: user, enabled })
+        });
+        if (!res.ok) throw new Error('Failed to toggle feedback');
+        await loadUsers();
+      } catch (e) { alert(e.message); }
+    }
+
+    // Events
+    $('btn-login').addEventListener('click', login);
+    $('btn-signup').addEventListener('click', signup);
+    $('show-signup').addEventListener('click', () => {
+      $('login-form').classList.add('hidden');
+      $('signup-form').classList.remove('hidden');
+      $('auth-error').classList.add('hidden');
+    });
+    $('show-login').addEventListener('click', () => {
+      $('signup-form').classList.add('hidden');
+      $('login-form').classList.remove('hidden');
+      $('auth-error').classList.add('hidden');
+    });
+    $('btn-logout').addEventListener('click', logout);
+    $('btn-admin-logout').addEventListener('click', logout);
+    $('btn-submit').addEventListener('click', submitAssignment);
+    $('btn-generate').addEventListener('click', generateFeedback);
+    $('btn-survey').addEventListener('click', () => {
+      // Microsoft Form URL (haven't create) Remember it !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      window.open('Microsoft Form URL', '_blank');
+      logEvent('survey_click', $('assignment').value, $('domain').value);
+    });
+    $('btn-history').addEventListener('click', showHistory);
+    $('close-history').addEventListener('click', hideHistory);
+    $('history-modal').addEventListener('click', (e) => {
+      if (e.target === $('history-modal')) {
+        hideHistory();
+      }
+    });
+    $('btn-copy').addEventListener('click', () => {
+      const txt = JSON.stringify(window._lastJSON || {}, null, 2);
+      navigator.clipboard.writeText(txt);
+    });
+
+    // Enter shortcuts
+    $('login-password').addEventListener('keypress', (e) => { if (e.key === 'Enter') login(); });
+    $('signup-password').addEventListener('keypress', (e) => { if (e.key === 'Enter') signup(); });
+
+    // Init
+    if (token) { showDashboard(); }
+    else { $('auth-page').classList.remove('hidden'); }
+  </script>
+</body>
+</html>
