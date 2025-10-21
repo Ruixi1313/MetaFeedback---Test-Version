@@ -9,12 +9,6 @@ A minimal web interface for collecting and generating process oriented meta-feed
 - Admins can view and trigger feedback for each student
 - Lightweight — no external framework required for frontend
 
-## Tech Stack
-
-- **Frontend:** plain HTML/CSS/JS (`index.html`)
-- **Backend:** FastAPI + Uvicorn (`server.py`)
-- **DB:** SQLite
-- **AI:** OpenAI Chat Completions API
 
 ## Prerequisites
 
