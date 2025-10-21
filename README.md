@@ -13,7 +13,7 @@ A minimal web interface for collecting and generating process oriented meta-feed
 
 - **Frontend:** plain HTML/CSS/JS (`index.html`)
 - **Backend:** FastAPI + Uvicorn (`server.py`)
-- **DB:** SQLite via SQLAlchemy
+- **DB:** SQLite
 - **AI:** OpenAI Chat Completions API
 
 ## Prerequisites
