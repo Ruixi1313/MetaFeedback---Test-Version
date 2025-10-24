@@ -1,24 +1,5 @@
-# Virtual environment
 venv/
-.env
-*.sqlite3
-*.db
 __pycache__/
 *.pyc
-
-# Secrets
-openai_api_key.txt
-google_credentials.json
-
-# Logs and temp files
-logs/
-*.log
-
-# OS / IDE files
+.env
 .DS_Store
-.idea/
-.vscode/
-
-# User uploads or data
-uploads/
-user_files/

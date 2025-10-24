@@ -73,8 +73,10 @@
       <div class="flex items-center gap-2">
         <label class="text-sm text-slate-600">Assignment</label>
         <select id="assignment" class="border rounded-xl px-3 py-2 bg-white shadow-soft">
-          <option>Assignment 1</option>
-          <option>Assignment 2</option>
+          <option>Assignment 1 - Group 1</option>
+          <option>Assignment 1 - Group 2</option>
+          <option>Assignment 2 - Group 1</option>
+          <option>Assignment 2 - Group 2</option>
           <option>Assignment 3</option>
           <option>Assignment 4</option>
         </select>
@@ -106,7 +108,7 @@
           <h2 class="font-semibold">Code (Python)</h2>
           <span class="text-xs px-2 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700">Implementation</span>
         </div>
-        <textarea id="code" class="min-h-[180px] w-full border rounded-xl p-3 font-mono" placeholder="Paste Python code here"></textarea>
+        <textarea id="code" class="min-h-[180px] w-full border rounded-xl p-3 font-mono" placeholder="Code here"></textarea>
       </section>
 
       <section class="bg-white rounded-2xl border border-slate-200 shadow-soft p-4 space-y-3 md:col-span-2">
@@ -114,6 +116,38 @@
           <h2 class="font-semibold">Tests (/tests)</h2>
         </div>
         <textarea id="tests" class="min-h-[140px] w-full border rounded-xl p-3 font-mono" placeholder="Describe or paste tests"></textarea>
+      </section>
+
+      <!-- Confidence Level Section -->
+      <section id="confidence-section" class="hidden bg-white rounded-2xl border border-slate-200 shadow-soft p-5 space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="font-semibold">Confidence Level</h2>
+        </div>
+        
+        <div class="space-y-4">
+          <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <p class="text-sm text-blue-800">
+              Confidence Level reflects how strongly you believe your answer would work without major changes.
+            </p>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">Your Confidence Level</label>
+            <div class="flex items-center space-x-4">
+              <input type="range" id="confidence-slider" min="0" max="100" value="50" 
+                     class="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+              <span id="confidence-value" class="text-lg font-semibold text-slate-700 w-16 text-center">50%</span>
+            </div>
+            <div class="flex justify-between text-xs text-slate-500 mt-1">
+              <span>0% (Not confident)</span>
+              <span>100% (Very confident)</span>
+            </div>
+          </div>
+          
+          <div class="flex gap-3">
+            <button id="btn-submit-confidence" class="px-4 py-2 rounded-xl bg-orange-600 text-white hover:bg-orange-700">Submit</button>
+          </div>
+        </div>
       </section>
     </main>
 
@@ -123,57 +157,31 @@
       <button id="btn-survey" class="hidden px-4 py-2 rounded-xl bg-purple-600 text-white hover:bg-purple-700">Complete Survey</button>
       <button id="btn-history" class="px-4 py-2 rounded-xl bg-slate-600 text-white hover:bg-slate-700">See Submission History</button>
       <button id="btn-copy" class="px-4 py-2 rounded-xl border hover:bg-slate-50">Copy JSON</button>
-    </div>
-
-    <section id="output" class="hidden bg-white rounded-2xl border border-slate-200 shadow-soft p-5 space-y-4">
-      <h3 class="text-xl font-semibold">AI Meta-Feedback</h3>
-
-      <div>
-        <h4 class="font-semibold mb-1">Score explanation</h4>
-        <p id="score" class="text-slate-700"></p>
       </div>
 
-      <div class="grid md:grid-cols-2 gap-6">
-        <div>
-          <h4 class="font-semibold mb-2">Findings</h4>
-          <ul id="findings" class="list-disc pl-5 text-sm space-y-1"></ul>
+      <section id="output" class="hidden bg-white border border-slate-200 rounded-2xl shadow p-6">
+        <h2 class="text-lg font-semibold mb-4">AI Meta-Feedback</h2>
+      
+        <div class="space-y-3 text-sm">
+          <div>
+            <div class="font-semibold">Plan suggestions</div>
+            <ul id="out-plan-sugs" class="list-disc pl-5 text-slate-700 space-y-1"></ul>
+          </div>
+      
+          <div>
+            <div class="font-semibold">Code suggestions</div>
+            <ul id="out-code-sugs" class="list-disc pl-5 text-slate-700 space-y-1"></ul>
+          </div>
+      
+          <div>
+            <div class="font-semibold">Test suggestions</div>
+            <ul id="out-test-sugs" class="list-disc pl-5 text-slate-700 space-y-1"></ul>
+          </div>
         </div>
-        <div>
-          <h4 class="font-semibold mb-2">Gaps</h4>
-          <ul id="gaps" class="list-disc pl-5 text-sm space-y-1"></ul>
-        </div>
-      </div>
-
-      <div class="grid md:grid-cols-2 gap-6">
-        <div>
-          <h4 class="font-semibold mb-2">Suggestions</h4>
-          <ul id="suggestions" class="list-disc pl-5 text-sm space-y-1"></ul>
-        </div>
-        <div>
-          <h4 class="font-semibold mb-2">Test feedback</h4>
-          <ul id="testfb" class="list-disc pl-5 text-sm space-y-1"></ul>
-        </div>
-      </div>
-
-      <div>
-        <h4 class="font-semibold mb-2">Code feedback</h4>
-        <ul id="codefb" class="list-disc pl-5 text-sm space-y-1"></ul>
-      </div>
-
-      <div>
-        <h4 class="font-semibold mb-2">Summary</h4>
-        <p id="summary" class="text-slate-700"></p>
-      </div>
-
-      <div id="last-md" class="text-xs text-slate-500"></div>
-      <!-- Restored feedback block -->
-      <div id="restored-block" class="hidden">
-        <h4 class="font-semibold mb-2">Last feedback (restored)</h4>
-        <pre id="restored-md" class="text-sm text-slate-800 bg-slate-50 border rounded-lg p-3 overflow-auto"></pre>
-      </div>
-    </section>
-
-    <!-- History Modal -->
+      </section>
+      
+  
+      <!-- History Modal -->
     <div id="history-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div class="bg-white rounded-2xl border border-slate-200 shadow-soft p-6 w-full max-w-4xl max-h-[80vh] overflow-y-auto">
         <div class="flex items-center justify-between mb-6">
@@ -187,9 +195,44 @@
           </div>
         </div>
       </div>
+      <!-- Success Modal -->
+    <div id="success-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-soft p-6 w-full max-w-md">
+        <h3 class="text-2xl font-bold mb-2">Submission Successful</h3>
+        <p class="text-slate-700">Your assignment was submitted.</p>
+        <p class="text-slate-700 mt-1">Next, please report your confidence level.</p>
+        <div class="mt-6 flex justify-end gap-2">
+          <button id="ok-success" class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">OK</button>
+        </div>
+      </div>
     </div>
-  </div>
 
+    <!-- Confidence Modal -->
+    <div id="confidence-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-soft p-6 w-full max-w-md">
+        <h3 class="text-2xl font-bold mb-3">Confidence Level</h3>
+        <p class="text-slate-700 mb-4">
+          Confidence Level reflects how strongly you believe your answer would work without major changes.
+        </p>
+
+        <div class="mb-4">
+          <input id="confidence-slider" type="range" min="0" max="100" value="50" class="w-full">
+          <div class="text-sm text-slate-600 mt-1">
+            Selected: <span id="confidence-value" class="font-semibold">50</span>%
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2">
+          <button id="submit-confidence" class="px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700" disabled>
+            Submit Confidence
+          </button>
+        </div>
+      </div>
+    </div>
+    </div>
+
+  </div>
+  
   <!-- Admin -->
   <div id="admin-page" class="hidden p-6 md:p-10 mx-auto max-w-7xl space-y-6">
     <header class="flex items-center justify-between">
@@ -211,12 +254,105 @@
         <div id="submissions-list" class="space-y-3 max-h-[600px] overflow-y-auto"></div>
       </section>
     </div>
+
+    <!-- Question Management Section -->
+    <section class="bg-white rounded-2xl border border-slate-200 shadow-soft p-5">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-semibold">Assignment Questions</h2>
+        <button id="btn-add-question" class="px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">Add Question</button>
+      </div>
+      <div id="questions-list" class="space-y-3 max-h-[400px] overflow-y-auto"></div>
+    </section>
+
+    <!-- Confidence Level Management Section -->
+    <section class="bg-white rounded-2xl border border-slate-200 shadow-soft p-5">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-semibold">Student Confidence Levels</h2>
+        <div class="flex gap-2">
+          <button id="btn-refresh-confidence" class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">Refresh</button>
+          <button id="btn-delete-all-confidence" class="px-4 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700">Delete All</button>
+        </div>
+      </div>
+      <div class="mb-4">
+        <p class="text-sm text-slate-600">Students sorted by confidence level (lowest to highest) - the top half (lowest confidence) are highlighted for feedback consideration</p>
+      </div>
+      <div id="confidence-list" class="space-y-3 max-h-[400px] overflow-y-auto"></div>
+    </section>
+
+    <!-- Question Modal -->
+    <div id="question-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-soft p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-2xl font-bold" id="question-modal-title">Add Question</h3>
+          <button id="close-question-modal" class="text-slate-500 hover:text-slate-700 text-2xl">&times;</button>
+        </div>
+        
+        <form id="question-form" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">Assignment</label>
+            <select id="question-assignment" class="w-full border rounded-xl px-3 py-2" required>
+              <option value="">Select Assignment</option>
+              <option value="Assignment 1 - Group 1">Assignment 1 - Group 1</option>
+              <option value="Assignment 1 - Group 2">Assignment 1 - Group 2</option>
+              <option value="Assignment 2 - Group 1">Assignment 2 - Group 1</option>
+              <option value="Assignment 2 - Group 2">Assignment 2 - Group 2</option>
+              <option value="Assignment 3">Assignment 3</option>
+              <option value="Assignment 4">Assignment 4</option>
+            </select>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">Domain</label>
+            <select id="question-domain" class="w-full border rounded-xl px-3 py-2" required>
+              <option value="">Select Domain</option>
+              <option value="Sorting">Sorting</option>
+              <option value="Graph (BFS/DFS)">Graph (BFS/DFS)</option>
+              <option value="Dynamic Programming">Dynamic Programming</option>
+              <option value="Greedy">Greedy</option>
+              <option value="Divide & Conquer / Binary Search">Divide & Conquer / Binary Search</option>
+              <option value="Strings (KMP/Rabin-Karp)">Strings (KMP/Rabin-Karp)</option>
+            </select>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">Question Text</label>
+            <textarea id="question-text" class="w-full border rounded-xl p-3 min-h-[120px]" placeholder="Enter the assignment question text..." required></textarea>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">Rubric/Notes (Optional)</label>
+            <textarea id="question-rubric" class="w-full border rounded-xl p-3 min-h-[80px]" placeholder="Enter rubric or additional notes..."></textarea>
+          </div>
+          
+          <div class="flex gap-3 pt-4">
+            <button type="submit" id="save-question" class="px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">Save Question</button>
+            <button type="button" id="cancel-question" class="px-4 py-2 rounded-xl border hover:bg-slate-50">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
   </div>
 
   <script>
-    const API_URL = '';
+    // Use current origin for API calls (works with both localhost and ngrok)
+    // For ngrok, use the same origin; for localhost, use port 8000
+    const API_URL = window.location.hostname.includes('ngrok') 
+      ? window.location.origin 
+      : window.location.origin.replace(/:\d+$/, ':8000');
     const $ = (id) => document.getElementById(id);
     const li = (txt) => { const el = document.createElement('li'); el.textContent = txt; return el; };
+    
+    // HTML escaping function to prevent XSS and display issues
+    function escapeHtml(text) {
+      if (!text) return '';
+      return text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
 
     // Event logging utility
     async function logEvent(eventType, assignment = null, domain = null, details = null) {
@@ -259,7 +395,16 @@
         submissions.forEach(sub => {
           const el = document.createElement('div');
           el.className = 'p-3 rounded-lg border bg-slate-50';
-          const time = new Date(sub.timestamp).toLocaleString();
+          const time = new Date(sub.timestamp).toLocaleString('en-US', { 
+            timeZone: 'America/Los_Angeles',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+          });
           el.innerHTML = `
             <div class="flex items-start justify-between mb-2">
               <div>
@@ -328,13 +473,21 @@
         if (data.tests != null) $('tests').value = data.tests;
 
         if (data.feedback_md && data.feedback_md.trim().length > 0) {
-          $('output').classList.remove('hidden');
-          $('restored-block').classList.remove('hidden');
-          $('restored-md').textContent = data.feedback_md;
-          $('last-md').textContent = ''; 
+          const legacyMarkers = ["**Score explanation**", "**Findings**", "**Gaps**", "**Summary**"];
+          const isLegacy = legacyMarkers.some(m => data.feedback_md.includes(m));
+          if (isLegacy) {
+            // Hide any legacy feedback block if present
+            const rb = $('restored-block'); if (rb) rb.classList.add('hidden');
+            const rm = $('restored-md'); if (rm) rm.textContent = '';
         } else {
-          $('restored-block').classList.add('hidden');
-          $('restored-md').textContent = '';
+          $('output')?.classList.remove('hidden');
+          $('restored-block')?.classList.remove('hidden');
+          $('restored-md') && ( $('restored-md').textContent = data.feedback_md );
+          $('last-md') && ( $('last-md').textContent = '' ); 
+        }
+        } else {
+          $('restored-block')?.classList.add('hidden');
+          $('restored-md') && ( $('restored-md').textContent = '' );
         }
       } catch (e) {
         console.warn('loadDraft failed', e);
@@ -452,10 +605,17 @@
       $('auth-page').classList.add('hidden');
       if (isAdmin) {
         $('admin-page').classList.remove('hidden');
+        $('user-page').classList.add('hidden');
+        // Hide confidence modal for admin users
+        $('confidence-modal').classList.add('hidden');
         loadAdminData();
       } else {
         $('user-page').classList.remove('hidden');
         $('user-name').textContent = username;
+        
+        // Hide confidence section initially
+        $('confidence-section').classList.add('hidden');
+        
         await loadDraft();          // <-- restore from server on entry
         await checkFeedbackStatus();
         
@@ -467,7 +627,30 @@
     }
 
     // Student actions
+    let pendingSubmission = null;
+
+    async function checkIfFirstSubmission() {
+      try {
+        const res = await fetch(`${API_URL}/my-submissions`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const submissions = await res.json();
+        // If there are 0 or 1 submissions (including the one just submitted), this is the first
+        return submissions.length <= 1;
+      } catch (e) {
+        console.error('Failed to check submission history:', e);
+        // If we can't check, assume it's not the first submission to be safe
+        return false;
+      }
+    }
+
     async function submitAssignment() {
+      // Only allow student users to submit assignments
+      if (username === 'admin') {
+        alert('Admin users cannot submit assignments. Please log in as a student.');
+        return;
+      }
+      
       const payload = {
         assignment: $('assignment').value,
         domain: $('domain').value,
@@ -475,17 +658,87 @@
         code: $('code').value,
         tests: $('tests').value
       };
+      
+      // Validate required fields
+      if (!payload.assignment || !payload.domain || !payload.plan || !payload.code || !payload.tests) {
+        alert('❌ Please fill in all required fields before submitting.');
+        return;
+      }
+      
       try {
+        // Submit assignment first
         const res = await fetch(`${API_URL}/submit`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
           body: JSON.stringify(payload)
         });
-        if (!res.ok) throw new Error('Submission failed');
-        alert('Assignment submitted successfully!');
+        
+        if (!res.ok) throw new Error('❌ Submission failed. Please try again.');
+        
+        
+        // Show success message
+        alert('✅ Submission Successful!\n\nYour assignment has been submitted.');
+        
+        // Check if this is the user's first submission
+        const isFirstSubmission = await checkIfFirstSubmission();
+        
+        // Only show confidence level section after first submission
+        if (isFirstSubmission) {
+          $('confidence-section').classList.remove('hidden');
+        }
+        
         await checkFeedbackStatus();
       } catch (e) {
-        alert(e.message);
+        alert('❌ ' + e.message);
+      }
+    }
+
+    function updateConfidenceValue() {
+      const value = $('confidence-slider').value;
+      $('confidence-value').textContent = value + '%';
+    }
+
+    async function submitConfidence() {
+      const confidenceLevel = parseInt($('confidence-slider').value);
+      
+      // Validate confidence level
+      if (isNaN(confidenceLevel) || confidenceLevel < 0 || confidenceLevel > 100) {
+        alert('❌ Please select a valid confidence level between 0% and 100%.');
+        return;
+      }
+      
+      try {
+        // Get the current assignment and domain
+        const assignment = $('assignment').value;
+        const domain = $('domain').value;
+        
+        if (!assignment || !domain) {
+          alert('❌ Please make sure you have selected an assignment and domain.');
+          return;
+        }
+        
+        // Submit confidence level
+        const res = await fetch(`${API_URL}/submission/confidence`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({
+            assignment: assignment,
+            domain: domain,
+            confidence_level: confidenceLevel
+          })
+        });
+        
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({ detail: 'Unknown error' }));
+          throw new Error(`❌ Failed to submit confidence level: ${errorData.detail || 'Unknown error'}`);
+        }
+        
+        alert('✅ Confidence Level Submitted!\n\nYour confidence level has been recorded.');
+        
+        // Hide the confidence section after submission
+        $('confidence-section').classList.add('hidden');
+      } catch (e) {
+        alert('❌ ' + e.message);
       }
     }
 
@@ -522,69 +775,90 @@
     }
 
     async function generateFeedback() {
-      const payload = {
-        assignment: $('assignment').value,
-        domain: $('domain').value,
-        plan: $('plan').value,
-        code: $('code').value,
-        tests: $('tests').value
-      };
-      $('btn-generate').disabled = true;
-      $('btn-generate').textContent = 'Analyzing...';
-      
-      // Log that user clicked generate (frontend event)
-      logEvent('generate_click', payload.assignment, payload.domain);
-      
-      try {
-        const res = await fetch(`${API_URL}/analyze`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify(payload)
-        });
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.detail || 'Analysis failed');
-        }
-        const data = await res.json();
-        renderFeedback(data);
-        window._lastJSON = data;
-        
-        // Log view_feedback when feedback is rendered
-        logEvent('view_feedback', payload.assignment, payload.domain);
-        
-        // Save the latest draft to persist content immediately
-        await saveDraft();
-        
-        // Refresh button status after successful feedback
-        await checkFeedbackStatus();
-      } catch (e) {
-        alert(e.message);
-      } finally {
-        $('btn-generate').disabled = false;
-      }
+  const payload = {
+    assignment: $('assignment').value,
+    domain: $('domain').value,
+    plan: $('plan').value,
+    code: $('code').value,
+    tests: $('tests').value
+  };
+
+  $('btn-generate').disabled = true;
+  $('btn-generate').textContent = 'Analyzing…';
+
+  // log click
+  logEvent('generate_click', payload.assignment, payload.domain);
+
+  try {
+    // IMPORTANT: keep the leading slash if you don’t use API_URL
+    const res = await fetch(`${API_URL}/analyze`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    });
+
+    // read as TEXT first to avoid "Unexpected token 'I'..." on 500s
+    const raw = await res.text();
+    let data;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      alert('Analyze failed (non-JSON response):\n' + raw.slice(0, 200));
+      return;
     }
 
-    function renderFeedback(data) {
-      $('output').classList.remove('hidden');
-      $('score').textContent = data.score_explanation || '';
-      const sections = [
-        ['findings', data.findings || []],
-        ['gaps', data.gaps || []],
-        ['suggestions', data.suggestions || []],
-        ['codefb', data.code_feedback || []],
-        ['testfb', data.test_feedback || []],
-      ];
-      sections.forEach(([id, arr]) => {
-        const ul = $(id); ul.innerHTML = '';
-        (arr || []).forEach(x => ul.appendChild(li(x)));
-        if ((arr || []).length === 0) ul.appendChild(li('—'));
-      });
-      $('summary').textContent = data.summary || '';
-      $('last-md').textContent = ''; 
+    if (!res.ok) {
+      // backend should send {detail: "..."} or {error, detail}
+      alert('Analyze failed: ' + (data.detail || data.error || 'Unknown'));
+      return;
     }
+
+    // RENDER the new 3 lists
+    renderSuggestionsOnly(data);
+    $('output').classList.remove('hidden');
+    window._lastJSON = data;
+    $('restored-block')?.classList.add('hidden');
+    $('restored-md') && ( $('restored-md').textContent = '' );
+    // log viewing + persist draft
+    logEvent('view_feedback', payload.assignment, payload.domain);
+    await saveDraft();
+    await checkFeedbackStatus();
+
+  } catch (e) {
+    alert('❌ ' + (e.message || e));
+  } finally {
+    $('btn-generate').disabled = false;
+    $('btn-generate').textContent = 'Get Meta-Feedback Again';
+  }
+}
+
+    function renderList(id, arr) {
+  const ul = document.getElementById(id);
+  ul.innerHTML = '';
+  (arr || []).forEach(s => {
+    const li = document.createElement('li');
+    li.textContent = s;
+    ul.appendChild(li);
+  });
+}
+
+function renderSuggestionsOnly(data) {
+  renderList('out-plan-sugs', data.plan_suggestions || []);
+  renderList('out-code-sugs', data.code_suggestions || []);
+  renderList('out-test-sugs', data.test_suggestions || []);
+  if (data.summary) {
+    const summaryBox = document.createElement('div');
+    summaryBox.className = 'mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg';
+    summaryBox.innerHTML = `<strong>Reflection:</strong> ${data.summary}`;
+    document.querySelector('.space-y-3.text-sm').appendChild(summaryBox);
+  }
+}
 
     // Admin
-    async function loadAdminData() { await loadUsers(); await loadSubmissions(); }
+    async function loadAdminData() { await loadUsers(); await loadSubmissions(); await loadQuestions(); await loadConfidenceLevels(); }
 
     async function loadUsers() {
       try {
@@ -602,12 +876,10 @@
                 ${user.feedback_enabled ? 'Feedback Enabled' : 'Survey Mode'}
               </span>
             </div>
-            <label class="flex items-center gap-2 cursor-pointer">
-              <span class="text-sm text-slate-600">Enable Feedback</span>
-              <input type="checkbox" ${user.feedback_enabled ? 'checked' : ''} 
-                     onchange="toggleFeedback('${user.username}', this.checked)"
-                     class="w-5 h-5 rounded border-gray-300">
-            </label>`;
+            <div class="flex items-center gap-3">
+              <button onclick="resetUserPassword('${user.username}')" class="text-xs px-2 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200">Reset Password</button>
+              <button onclick="deleteUser('${user.username}')" class="text-xs px-2 py-1 rounded bg-red-100 text-red-700 hover:bg-red-200">Delete User</button>
+            </div>`;
           container.appendChild(el);
         });
       } catch (e) { console.error('loadUsers', e); }
@@ -622,22 +894,34 @@
         subs.forEach(sub => {
           const wrap = document.createElement('div');
           wrap.className = 'p-4 rounded-lg border bg-slate-50';
-          const time = new Date(sub.timestamp).toLocaleString();
+          const time = new Date(sub.timestamp).toLocaleString('en-US', { 
+            timeZone: 'America/Los_Angeles',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+          });
           wrap.innerHTML = `
             <div class="flex items-start justify-between mb-2">
               <div>
                 <span class="font-medium text-slate-900">${sub.username}</span>
                 <span class="ml-2 text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700">${sub.assignment}</span>
               </div>
-              <span class="text-xs text-slate-500">${time}</span>
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-slate-500">${time}</span>
+                <button onclick="deleteSubmission(${sub.id})" class="text-xs px-2 py-1 rounded bg-red-100 text-red-700 hover:bg-red-200">Delete</button>
+              </div>
             </div>
             <div class="text-sm text-slate-600 mb-2"><strong>Domain:</strong> ${sub.domain}</div>
             <details class="text-sm">
               <summary class="cursor-pointer text-emerald-600 hover:text-emerald-700">View Details</summary>
               <div class="mt-2 p-3 bg-white rounded border space-y-2">
-                <div><strong>Plan:</strong><br><pre class="text-xs mt-1">${sub.plan || 'N/A'}</pre></div>
-                <div><strong>Code:</strong><br><pre class="text-xs mt-1 font-mono">${sub.code || 'N/A'}</pre></div>
-                <div><strong>Tests:</strong><br><pre class="text-xs mt-1 font-mono">${sub.tests || 'N/A'}</pre></div>
+                <div><strong>Plan:</strong><br><pre class="text-xs mt-1 whitespace-pre-wrap">${escapeHtml(sub.plan || 'N/A')}</pre></div>
+                <div><strong>Code:</strong><br><pre class="text-xs mt-1 font-mono whitespace-pre-wrap">${escapeHtml(sub.code || 'N/A')}</pre></div>
+                <div><strong>Tests:</strong><br><pre class="text-xs mt-1 font-mono whitespace-pre-wrap">${escapeHtml(sub.tests || 'N/A')}</pre></div>
               </div>
             </details>`;
           c.appendChild(wrap);
@@ -646,21 +930,424 @@
       } catch (e) { console.error('loadSubmissions', e); }
     }
 
-    async function toggleFeedback(user, enabled) {
+
+    // Question Management Functions
+    let currentEditingQuestionId = null;
+
+    async function loadQuestions() {
+      try {
+        const res = await fetch(`${API_URL}/admin/questions`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const questions = await res.json();
+        const container = $('questions-list');
+        container.innerHTML = '';
+        
+        if (questions.length === 0) {
+          container.innerHTML = '<p class="text-slate-500 text-center py-4">No questions yet</p>';
+          return;
+        }
+        
+        questions.forEach(q => {
+          const el = document.createElement('div');
+          el.className = 'p-4 rounded-lg border bg-slate-50';
+          el.innerHTML = `
+            <div class="flex items-start justify-between mb-3">
+              <div>
+                <span class="font-medium text-slate-900">${q.assignment}</span>
+                <span class="ml-2 text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700">${q.domain}</span>
+              </div>
+              <div class="flex gap-2">
+                <button onclick="editQuestion(${q.id})" class="text-xs px-2 py-1 rounded bg-emerald-100 text-emerald-700 hover:bg-emerald-200">Edit</button>
+                <button onclick="deleteQuestion(${q.id})" class="text-xs px-2 py-1 rounded bg-red-100 text-red-700 hover:bg-red-200">Delete</button>
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <div class="flex items-center justify-between mb-2">
+                <strong class="text-sm text-slate-700">Question:</strong>
+                <button onclick="toggleQuestionText(${q.id})" class="text-xs px-2 py-1 rounded bg-slate-100 text-slate-600 hover:bg-slate-200" id="toggle-btn-${q.id}">Show Full</button>
+              </div>
+              <div class="bg-white border rounded-lg p-3">
+                <div id="question-text-${q.id}" class="text-sm text-slate-600 whitespace-pre-wrap max-h-20 overflow-hidden transition-all duration-300">
+                  ${q.question_text}
+                </div>
+              </div>
+            </div>
+            
+            ${q.rubric ? `
+            <div class="mb-3">
+              <div class="flex items-center justify-between mb-2">
+                <strong class="text-sm text-slate-700">Rubric:</strong>
+                <button onclick="toggleRubricText(${q.id})" class="text-xs px-2 py-1 rounded bg-slate-100 text-slate-600 hover:bg-slate-200" id="toggle-rubric-btn-${q.id}">Show Full</button>
+              </div>
+              <div class="bg-white border rounded-lg p-3">
+                <div id="rubric-text-${q.id}" class="text-sm text-slate-600 whitespace-pre-wrap max-h-20 overflow-hidden transition-all duration-300">
+                  ${q.rubric}
+                </div>
+              </div>
+            </div>
+            ` : ''}
+          `;
+          container.appendChild(el);
+        });
+      } catch (e) { 
+        console.error('loadQuestions', e);
+        $('questions-list').innerHTML = '<p class="text-red-500 text-center py-4">Error loading questions</p>';
+      }
+    }
+
+    function showQuestionModal(questionId = null) {
+      currentEditingQuestionId = questionId;
+      $('question-modal').classList.remove('hidden');
+      $('question-modal-title').textContent = questionId ? 'Edit Question' : 'Add Question';
+      $('save-question').textContent = questionId ? 'Update Question' : 'Save Question';
+      
+      if (questionId) {
+        // Load question data for editing
+        loadQuestionForEdit(questionId);
+      } else {
+        // Clear form for new question
+        $('question-form').reset();
+      }
+    }
+
+    function hideQuestionModal() {
+      $('question-modal').classList.add('hidden');
+      currentEditingQuestionId = null;
+      $('question-form').reset();
+    }
+
+    async function loadQuestionForEdit(questionId) {
+      try {
+        const res = await fetch(`${API_URL}/admin/questions`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const questions = await res.json();
+        const question = questions.find(q => q.id === questionId);
+        
+        if (question) {
+          $('question-assignment').value = question.assignment;
+          $('question-domain').value = question.domain;
+          $('question-text').value = question.question_text;
+          $('question-rubric').value = question.rubric || '';
+        }
+      } catch (e) {
+        console.error('loadQuestionForEdit', e);
+        alert('Failed to load question data');
+      }
+    }
+
+    async function saveQuestion() {
+      const assignment = $('question-assignment').value;
+      const domain = $('question-domain').value;
+      const questionText = $('question-text').value;
+      const rubric = $('question-rubric').value;
+
+      if (!assignment || !domain || !questionText) {
+        alert('Please fill in all required fields');
+        return;
+      }
+
+      try {
+        const payload = {
+          assignment,
+          domain,
+          question_text: questionText,
+          rubric: rubric || null
+        };
+
+        let res;
+        if (currentEditingQuestionId) {
+          res = await fetch(`${API_URL}/admin/questions/${currentEditingQuestionId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify(payload)
+          });
+        } else {
+          res = await fetch(`${API_URL}/admin/questions`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify(payload)
+          });
+        }
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || 'Failed to save question');
+        }
+
+        hideQuestionModal();
+        await loadQuestions();
+      } catch (e) {
+        alert(e.message);
+      }
+    }
+
+    async function deleteQuestion(questionId) {
+      if (!confirm('Are you sure you want to delete this question?')) return;
+
+      try {
+        const res = await fetch(`${API_URL}/admin/questions/${questionId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || 'Failed to delete question');
+        }
+
+        await loadQuestions();
+      } catch (e) {
+        alert(e.message);
+      }
+    }
+
+    function editQuestion(questionId) {
+      showQuestionModal(questionId);
+    }
+
+    // Admin Delete Functions
+    async function deleteUser(username) {
+      if (!confirm(`⚠️ Are you sure you want to delete user "${username}"?\n\nThis will permanently delete:\n- User account\n- All submissions\n- All drafts\n- All feedback history\n\nThis action cannot be undone!`)) return;
+
+      try {
+        const res = await fetch(`${API_URL}/admin/users/${username}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || 'Failed to delete user');
+        }
+
+        alert('✅ User deleted successfully!');
+        await loadUsers();
+        await loadSubmissions();
+        await loadConfidenceLevels();
+      } catch (e) {
+        alert('❌ ' + e.message);
+      }
+    }
+
+    async function resetUserPassword(username) {
+      if (!confirm(`🔐 Are you sure you want to reset the password for user "${username}"?\n\nThis will generate a new temporary password that you can share with the user.`)) return;
+
+      try {
+        const res = await fetch(`${API_URL}/admin/reset-password?username=${encodeURIComponent(username)}`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || 'Failed to reset password');
+        }
+
+        const data = await res.json();
+        alert(`✅ Password reset successfully!\n\nUsername: ${username}\nTemporary Password: ${data.temporary_password}\n\n⚠️ Share this password with the user securely.`);
+      } catch (e) {
+        alert('❌ ' + e.message);
+      }
+    }
+
+    async function deleteSubmission(submissionId) {
+      if (!confirm('⚠️ Are you sure you want to delete this submission?\n\nThis action cannot be undone!')) return;
+
+      try {
+        const res = await fetch(`${API_URL}/admin/submissions/${submissionId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || 'Failed to delete submission');
+        }
+
+        alert('✅ Submission deleted successfully!');
+        await loadSubmissions();
+        await loadConfidenceLevels();
+      } catch (e) {
+        alert('❌ ' + e.message);
+      }
+    }
+    
+    async function deleteAllConfidenceSubmissions() {
+      if (!confirm('⚠️ Are you sure you want to delete ALL submissions with confidence levels?\n\nThis will permanently delete all student confidence data!\n\nThis action cannot be undone!')) return;
+
+      try {
+        const res = await fetch(`${API_URL}/admin/submissions/confidence`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || 'Failed to delete confidence submissions');
+        }
+
+        const result = await res.json();
+        alert(`✅ ${result.message}`);
+        await loadSubmissions();
+        await loadConfidenceLevels();
+      } catch (e) {
+        alert('❌ ' + e.message);
+      }
+    }
+
+    // Confidence Level Management Functions
+    async function loadConfidenceLevels() {
+      try {
+        // Get both confidence submissions and user feedback status
+        const [confidenceRes, usersRes] = await Promise.all([
+          fetch(`${API_URL}/admin/submissions-by-confidence`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(`${API_URL}/users`, { headers: { 'Authorization': `Bearer ${token}` } })
+        ]);
+        
+        const submissions = await confidenceRes.json();
+        const users = await usersRes.json();
+        const container = $('confidence-list');
+        container.innerHTML = '';
+        
+        if (submissions.length === 0) {
+          container.innerHTML = '<p class="text-slate-500 text-center py-4">No submissions with confidence levels yet</p>';
+          return;
+        }
+        
+        // Create a map of username to feedback status
+        const userFeedbackMap = {};
+        users.forEach(user => {
+          if (user.username !== 'admin') {
+            userFeedbackMap[user.username] = user.feedback_enabled;
+          }
+        });
+        
+        // Calculate the top half threshold (lowest confidence students)
+        const totalSubmissions = submissions.length;
+        const topHalfThreshold = Math.ceil(totalSubmissions / 2);
+        
+        submissions.forEach((sub, index) => {
+          const isTopHalf = index < topHalfThreshold;
+          const el = document.createElement('div');
+          el.className = `p-4 rounded-lg border ${isTopHalf ? 'bg-red-50 border-red-200' : 'bg-slate-50'}`;
+          const time = new Date(sub.timestamp).toLocaleString('en-US', { 
+            timeZone: 'America/Los_Angeles',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit',
+            hour12: false
+          });
+          const confidenceColor = sub.confidence_level < 30 ? 'text-red-600' : sub.confidence_level < 60 ? 'text-yellow-600' : 'text-green-600';
+          const feedbackEnabled = userFeedbackMap[sub.username] || false;
+          
+          el.innerHTML = `
+            <div class="flex items-start justify-between mb-2">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="font-medium text-slate-900">${sub.username}</span>
+                  <span class="text-xs px-2 py-1 rounded-full ${feedbackEnabled ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}">
+                    ${feedbackEnabled ? 'Feedback Enabled' : 'Survey Mode'}
+                  </span>
+                  <span class="ml-2 text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700">${sub.assignment}</span>
+                  <span class="ml-2 text-xs px-2 py-1 rounded-full bg-purple-100 text-purple-700">${sub.domain}</span>
+                </div>
+                <div class="text-sm text-slate-600">
+                  <div><strong>Plan:</strong> ${(sub.plan || 'N/A').substring(0, 80)}${(sub.plan || '').length > 80 ? '...' : ''}</div>
+                  <div><strong>Code:</strong> ${(sub.code || 'N/A').substring(0, 80)}${(sub.code || '').length > 80 ? '...' : ''}</div>
+                </div>
+                ${isTopHalf ? '<div class="mt-2 text-xs text-red-600 font-semibold">⚠️ Low Confidence - Consider for Feedback</div>' : ''}
+              </div>
+              <div class="flex flex-col items-end gap-2">
+                <div class="text-right">
+                  <div class="text-lg font-bold ${confidenceColor}">${sub.confidence_level}%</div>
+                  <div class="text-xs text-slate-500">${time}</div>
+                </div>
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" 
+                         class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500" 
+                         ${feedbackEnabled ? 'checked' : ''}
+                         onchange="toggleUserFeedback('${sub.username}', this.checked)">
+                  <span class="text-sm text-slate-600">Enable Feedback</span>
+                </label>
+              </div>
+            </div>
+          `;
+          container.appendChild(el);
+        });
+      } catch (e) { 
+        console.error('loadConfidenceLevels', e);
+        $('confidence-list').innerHTML = '<p class="text-red-500 text-center py-4">Error loading confidence levels</p>';
+      }
+    }
+
+    async function toggleUserFeedback(username, enabled) {
       try {
         const res = await fetch(`${API_URL}/admin/toggle-feedback`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify({ username: user, enabled })
+          body: JSON.stringify({ username, enabled })
         });
-        if (!res.ok) throw new Error('Failed to toggle feedback');
-        await loadUsers();
-      } catch (e) { alert(e.message); }
+        
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.detail || 'Failed to toggle feedback');
+        }
+        
+        const result = await res.json();
+        console.log(`Feedback ${enabled ? 'enabled' : 'disabled'} for ${username}`);
+        
+        // Refresh the confidence levels to show updated status
+        await loadConfidenceLevels();
+      } catch (e) {
+        console.error('Error toggling feedback:', e);
+        alert('❌ Failed to update feedback status: ' + e.message);
+        // Refresh to reset the checkbox state
+        await loadConfidenceLevels();
+      }
+    }
+
+    // Toggle functions for question and rubric text
+    function toggleQuestionText(questionId) {
+      const textElement = $(`question-text-${questionId}`);
+      const toggleButton = $(`toggle-btn-${questionId}`);
+      
+      if (textElement.classList.contains('max-h-20')) {
+        // Expand
+        textElement.classList.remove('max-h-20', 'overflow-hidden');
+        textElement.classList.add('max-h-96', 'overflow-y-auto');
+        toggleButton.textContent = 'Show Less';
+      } else {
+        // Collapse
+        textElement.classList.remove('max-h-96', 'overflow-y-auto');
+        textElement.classList.add('max-h-20', 'overflow-hidden');
+        toggleButton.textContent = 'Show Full';
+      }
+    }
+    
+    function toggleRubricText(questionId) {
+      const textElement = $(`rubric-text-${questionId}`);
+      const toggleButton = $(`toggle-rubric-btn-${questionId}`);
+      
+      if (textElement.classList.contains('max-h-20')) {
+        // Expand
+        textElement.classList.remove('max-h-20', 'overflow-hidden');
+        textElement.classList.add('max-h-96', 'overflow-y-auto');
+        toggleButton.textContent = 'Show Less';
+      } else {
+        // Collapse
+        textElement.classList.remove('max-h-96', 'overflow-y-auto');
+        textElement.classList.add('max-h-20', 'overflow-hidden');
+        toggleButton.textContent = 'Show Full';
+      }
     }
 
     // Events
     $('btn-login').addEventListener('click', login);
     $('btn-signup').addEventListener('click', signup);
+    $('confidence-slider').addEventListener('input', updateConfidenceValue);
+    $('btn-submit-confidence').addEventListener('click', submitConfidence);
     $('show-signup').addEventListener('click', () => {
       $('login-form').classList.add('hidden');
       $('signup-form').classList.remove('hidden');
@@ -691,6 +1378,25 @@
       const txt = JSON.stringify(window._lastJSON || {}, null, 2);
       navigator.clipboard.writeText(txt);
     });
+
+    // Question Management Event Listeners
+    $('btn-add-question').addEventListener('click', () => showQuestionModal());
+    $('close-question-modal').addEventListener('click', hideQuestionModal);
+    $('cancel-question').addEventListener('click', hideQuestionModal);
+    $('question-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      saveQuestion();
+    });
+    $('question-modal').addEventListener('click', (e) => {
+      if (e.target === $('question-modal')) {
+        hideQuestionModal();
+      }
+    });
+
+    // Confidence Level Management Event Listeners
+    $('btn-refresh-confidence').addEventListener('click', loadConfidenceLevels);
+    $('btn-delete-all-confidence').addEventListener('click', deleteAllConfidenceSubmissions);
+
 
     // Enter shortcuts
     $('login-password').addEventListener('keypress', (e) => { if (e.key === 'Enter') login(); });

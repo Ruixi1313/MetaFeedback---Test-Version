@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+openai>=1.40.0
+pydantic
+python-jose
+bcrypt
+python-multipart
+sqlalchemy
+pytz
