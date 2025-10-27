@@ -6,8 +6,8 @@
 
 import os
 from datetime import datetime, timedelta
-from typing import List, Optional, Dict, Any
 import pytz
+from typing import List, Optional, Dict, Any
 
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -43,6 +43,17 @@ def get_pst_now():
 def get_utc_now():
     """Get current time in UTC (standard for database storage)"""
     return datetime.utcnow()
+
+def to_pst_string(dt):
+    """Convert datetime to PST timezone string"""
+    if dt is None:
+        return ""
+    # Convert UTC to PST
+    utc = pytz.UTC
+    pst = pytz.timezone('US/Pacific')
+    utc_dt = utc.localize(dt) if dt.tzinfo is None else dt
+    pst_dt = utc_dt.astimezone(pst)
+    return pst_dt.strftime('%m/%d/%Y, %H:%M:%S')
 
 client = None  # Will be initialized when needed
 security = HTTPBearer()
@@ -706,7 +717,7 @@ def submit_assignment(
     return SubmissionResponse(
         id=new_s.id, username=new_s.username, assignment=new_s.assignment,
         domain=new_s.domain, plan=new_s.plan, code=new_s.code, tests=new_s.tests,
-        confidence_level=new_s.confidence_level, timestamp=new_s.timestamp.isoformat(), has_feedback=False
+        confidence_level=new_s.confidence_level, timestamp=to_pst_string(new_s.timestamp), has_feedback=False
     )
 
 @app.post("/submit-part", response_model=PartSubmissionResponse)
@@ -775,7 +786,7 @@ def get_all_submissions(admin: User = Depends(get_admin_user), db: Session = Dep
         SubmissionResponse(
             id=s.id, username=s.username, assignment=s.assignment, domain=s.domain,
             plan=s.plan, code=s.code, tests=s.tests, confidence_level=s.confidence_level,
-            timestamp=s.timestamp.isoformat(), has_feedback=False
+            timestamp=to_pst_string(s.timestamp), has_feedback=False
         )
         for s in rows
     ]
@@ -788,7 +799,7 @@ def get_my_submissions(current_user: User = Depends(get_current_user), db: Sessi
         SubmissionResponse(
             id=s.id, username=s.username, assignment=s.assignment, domain=s.domain,
             plan=s.plan, code=s.code, tests=s.tests, confidence_level=s.confidence_level,
-            timestamp=s.timestamp.isoformat(), has_feedback=False
+            timestamp=to_pst_string(s.timestamp), has_feedback=False
         )
         for s in rows
     ]
@@ -1173,7 +1184,7 @@ def get_submissions_by_confidence(admin: User = Depends(get_admin_user), db: Ses
         SubmissionResponse(
             id=s.id, username=s.username, assignment=s.assignment, domain=s.domain,
             plan=s.plan, code=s.code, tests=s.tests, confidence_level=s.confidence_level,
-            timestamp=s.timestamp.isoformat(), has_feedback=False
+            timestamp=to_pst_string(s.timestamp), has_feedback=False
         )
         for s in rows
     ]
