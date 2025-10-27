@@ -69,30 +69,6 @@
       <button id="btn-logout" class="px-4 py-2 rounded-xl border hover:bg-slate-50">Logout</button>
     </header>
 
-    <div class="flex items-center gap-3 flex-wrap">
-      <div class="flex items-center gap-2">
-        <label class="text-sm text-slate-600">Assignment</label>
-        <select id="assignment" class="border rounded-xl px-3 py-2 bg-white shadow-soft">
-          <option>Assignment 1 - Group 1</option>
-          <option>Assignment 1 - Group 2</option>
-          <option>Assignment 2 - Group 1</option>
-          <option>Assignment 2 - Group 2</option>
-          <option>Assignment 3</option>
-          <option>Assignment 4</option>
-        </select>
-      </div>
-      <div class="flex items-center gap-2">
-        <label class="text-sm text-slate-600">Domain</label>
-        <select id="domain" class="border rounded-xl px-3 py-2 bg-white shadow-soft">
-          <option>Sorting</option>
-          <option>Graph (BFS/DFS)</option>
-          <option>Dynamic Programming</option>
-          <option>Greedy</option>
-          <option>Divide & Conquer / Binary Search</option>
-          <option>Strings (KMP/Rabin-Karp)</option>
-        </select>
-      </div>
-    </div>
 
     <main class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <section class="bg-white rounded-2xl border border-slate-200 shadow-soft p-4 space-y-3">
@@ -243,6 +219,24 @@
       <button id="btn-admin-logout" class="px-4 py-2 rounded-xl border hover:bg-slate-50">Logout</button>
     </header>
 
+    <!-- Context Management Section -->
+    <section class="bg-white rounded-2xl border border-slate-200 shadow-soft p-5">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-semibold">Current Assignment/Domain Context</h2>
+        <button id="btn-set-context" class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">Set Context</button>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="flex items-center gap-2">
+          <label class="text-sm text-slate-600">Assignment:</label>
+          <span id="current-assignment" class="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg font-medium">Assignment 1 - Group 1</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <label class="text-sm text-slate-600">Domain:</label>
+          <span id="current-domain" class="px-3 py-1 bg-green-100 text-green-700 rounded-lg font-medium">Sorting</span>
+        </div>
+      </div>
+    </section>
+
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <section class="bg-white rounded-2xl border border-slate-200 shadow-soft p-5">
         <h2 class="text-xl font-semibold mb-4">Users</h2>
@@ -278,6 +272,49 @@
       </div>
       <div id="confidence-list" class="space-y-3 max-h-[400px] overflow-y-auto"></div>
     </section>
+
+    <!-- Context Setting Modal -->
+    <div id="context-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-soft p-6 w-full max-w-md">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-2xl font-bold">Set Assignment/Domain Context</h3>
+          <button id="close-context-modal" class="text-slate-500 hover:text-slate-700 text-2xl">&times;</button>
+        </div>
+        
+        <form id="context-form" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">Assignment</label>
+            <select id="context-assignment" class="w-full border rounded-xl px-3 py-2" required>
+              <option value="">Select Assignment</option>
+              <option value="Assignment 1 - Group 1">Assignment 1 - Group 1</option>
+              <option value="Assignment 1 - Group 2">Assignment 1 - Group 2</option>
+              <option value="Assignment 2 - Group 1">Assignment 2 - Group 1</option>
+              <option value="Assignment 2 - Group 2">Assignment 2 - Group 2</option>
+              <option value="Assignment 3">Assignment 3</option>
+              <option value="Assignment 4">Assignment 4</option>
+            </select>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">Domain</label>
+            <select id="context-domain" class="w-full border rounded-xl px-3 py-2" required>
+              <option value="">Select Domain</option>
+              <option value="Sorting">Sorting</option>
+              <option value="Graph (BFS/DFS)">Graph (BFS/DFS)</option>
+              <option value="Dynamic Programming">Dynamic Programming</option>
+              <option value="Greedy">Greedy</option>
+              <option value="Divide & Conquer / Binary Search">Divide & Conquer / Binary Search</option>
+              <option value="Strings (KMP/Rabin-Karp)">Strings (KMP/Rabin-Karp)</option>
+            </select>
+          </div>
+          
+          <div class="flex gap-3 pt-4">
+            <button type="submit" id="save-context" class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">Set Context</button>
+            <button type="button" id="cancel-context" class="px-4 py-2 rounded-xl border hover:bg-slate-50">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
 
     <!-- Question Modal -->
     <div id="question-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -443,8 +480,8 @@
     // Draft persistence 
     function draftPayload() {
       return {
-        assignment: $('assignment').value,  
-        domain: $('domain').value,          
+        assignment: currentContext.assignment,
+        domain: currentContext.domain,
         plan: $('plan').value || null,
         code: $('code').value || null,
         tests: $('tests').value || null,
@@ -454,8 +491,8 @@
 
     async function loadDraft() {
       try {
-        const a = $('assignment').value;
-        const d = $('domain').value;
+        const a = currentContext.assignment;
+        const d = currentContext.domain;
         console.log('Loading draft for:', a, d); // Debug log
         const res = await fetch(`${API_URL}/draft/me?assignment=${encodeURIComponent(a)}&domain=${encodeURIComponent(d)}`, {
           headers: { 'Authorization': `Bearer ${token}` }
@@ -530,15 +567,18 @@
       $(id).addEventListener('input', debounceSave);
     });
 
-    // Add event listeners for assignment/domain changes to reload draft
-    $('assignment').addEventListener('change', async () => {
-      await loadDraft();
-      logEvent('switch_assignment', $('assignment').value, $('domain').value);
-    });
-    $('domain').addEventListener('change', async () => {
-      await loadDraft();
-      logEvent('switch_assignment', $('assignment').value, $('domain').value);
-    });
+    // Context management functions
+    let currentContext = {
+      assignment: 'Assignment 1 - Group 1',
+      domain: 'Sorting'
+    };
+
+    function updateContextDisplay() {
+      if (isAdmin) {
+        $('current-assignment').textContent = currentContext.assignment;
+        $('current-domain').textContent = currentContext.domain;
+      }
+    }
 
     // Auth 
     async function login() {
@@ -603,6 +643,10 @@
 
     async function showDashboard() {
       $('auth-page').classList.add('hidden');
+      
+      // Initialize context display
+      updateContextDisplay();
+      
       if (isAdmin) {
         $('admin-page').classList.remove('hidden');
         $('user-page').classList.add('hidden');
@@ -621,7 +665,7 @@
         
         // Log view_feedback if feedback is visible
         if (!$('output').classList.contains('hidden')) {
-          logEvent('view_feedback', $('assignment').value, $('domain').value);
+          logEvent('view_feedback', currentContext.assignment, currentContext.domain);
         }
       }
     }
@@ -652,15 +696,15 @@
       }
       
       const payload = {
-        assignment: $('assignment').value,
-        domain: $('domain').value,
+        assignment: currentContext.assignment,
+        domain: currentContext.domain,
         plan: $('plan').value,
         code: $('code').value,
         tests: $('tests').value
       };
       
       // Validate required fields
-      if (!payload.assignment || !payload.domain || !payload.plan || !payload.code || !payload.tests) {
+      if (!payload.plan || !payload.code || !payload.tests) {
         alert('❌ Please fill in all required fields before submitting.');
         return;
       }
@@ -708,22 +752,13 @@
       }
       
       try {
-        // Get the current assignment and domain
-        const assignment = $('assignment').value;
-        const domain = $('domain').value;
-        
-        if (!assignment || !domain) {
-          alert('❌ Please make sure you have selected an assignment and domain.');
-          return;
-        }
-        
-        // Submit confidence level
+        // Submit confidence level using current context
         const res = await fetch(`${API_URL}/submission/confidence`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
           body: JSON.stringify({
-            assignment: assignment,
-            domain: domain,
+            assignment: currentContext.assignment,
+            domain: currentContext.domain,
             confidence_level: confidenceLevel
           })
         });
@@ -776,8 +811,8 @@
 
     async function generateFeedback() {
   const payload = {
-    assignment: $('assignment').value,
-    domain: $('domain').value,
+    assignment: currentContext.assignment,
+    domain: currentContext.domain,
     plan: $('plan').value,
     code: $('code').value,
     tests: $('tests').value
@@ -858,7 +893,43 @@ function renderSuggestionsOnly(data) {
 }
 
     // Admin
-    async function loadAdminData() { await loadUsers(); await loadSubmissions(); await loadQuestions(); await loadConfidenceLevels(); }
+    async function loadAdminData() { 
+      await loadUsers(); 
+      await loadSubmissions(); 
+      await loadQuestions(); 
+      await loadConfidenceLevels(); 
+      updateContextDisplay(); // Update context display for admin
+    }
+
+    // Context Management Functions
+    function showContextModal() {
+      $('context-modal').classList.remove('hidden');
+    }
+
+    function hideContextModal() {
+      $('context-modal').classList.add('hidden');
+      $('context-form').reset();
+    }
+
+    function saveContext() {
+      const assignment = $('context-assignment').value;
+      const domain = $('context-domain').value;
+
+      if (!assignment || !domain) {
+        alert('Please select both assignment and domain');
+        return;
+      }
+
+      // Update the current context
+      currentContext.assignment = assignment;
+      currentContext.domain = domain;
+      
+      // Update the display
+      updateContextDisplay();
+      
+      hideContextModal();
+      alert('✅ Context updated successfully!');
+    }
 
     async function loadUsers() {
       try {
@@ -1364,8 +1435,8 @@ function renderSuggestionsOnly(data) {
     $('btn-generate').addEventListener('click', generateFeedback);
     $('btn-survey').addEventListener('click', () => {
       // Microsoft Form URL (haven't create) Remember it !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      window.open('Microsoft Form URL', '_blank');
-      logEvent('survey_click', $('assignment').value, $('domain').value);
+      window.open('https://forms.office.com/Pages/ResponsePage.aspx?id=gcLuqKOqrk2sm5o5i5IV54_UjzNC4lpOpZ41yDeiv7FURUJQMVMzRUVDTDZOVUIyMDdPUFY5T0g1MS4u', '_blank');
+      logEvent('survey_click', currentContext.assignment, currentContext.domain);
     });
     $('btn-history').addEventListener('click', showHistory);
     $('close-history').addEventListener('click', hideHistory);
@@ -1377,6 +1448,20 @@ function renderSuggestionsOnly(data) {
     $('btn-copy').addEventListener('click', () => {
       const txt = JSON.stringify(window._lastJSON || {}, null, 2);
       navigator.clipboard.writeText(txt);
+    });
+
+    // Context Management Event Listeners
+    $('btn-set-context').addEventListener('click', showContextModal);
+    $('close-context-modal').addEventListener('click', hideContextModal);
+    $('cancel-context').addEventListener('click', hideContextModal);
+    $('context-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      saveContext();
+    });
+    $('context-modal').addEventListener('click', (e) => {
+      if (e.target === $('context-modal')) {
+        hideContextModal();
+      }
     });
 
     // Question Management Event Listeners
