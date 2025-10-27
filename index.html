@@ -70,28 +70,73 @@
     </header>
 
 
-    <main class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <section class="bg-white rounded-2xl border border-slate-200 shadow-soft p-4 space-y-3">
-        <div class="flex items-center justify-between">
-          <h2 class="font-semibold">DESIGN_PLAN.md</h2>
-          <span class="text-xs px-2 py-1 rounded-full bg-slate-100 border">Design</span>
+    <!-- Progress Indicator -->
+    <div class="mb-8">
+      <div class="flex items-center justify-center space-x-4">
+        <div class="flex items-center">
+          <div id="step-1-indicator" class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-semibold">1</div>
+          <span id="step-1-label" class="ml-2 text-sm font-medium text-blue-600">Design Plan</span>
         </div>
-        <textarea id="plan" class="min-h-[180px] w-full border rounded-xl p-3" placeholder="Describe algorithms, complexity, correctness sketch, assumptions, and test plan."></textarea>
+        <div class="w-12 h-0.5 bg-slate-300"></div>
+        <div class="flex items-center">
+          <div id="step-2-indicator" class="w-8 h-8 rounded-full bg-slate-300 text-slate-500 flex items-center justify-center text-sm font-semibold">2</div>
+          <span id="step-2-label" class="ml-2 text-sm font-medium text-slate-500">Implementation</span>
+        </div>
+        <div class="w-12 h-0.5 bg-slate-300"></div>
+        <div class="flex items-center">
+          <div id="step-3-indicator" class="w-8 h-8 rounded-full bg-slate-300 text-slate-500 flex items-center justify-center text-sm font-semibold">3</div>
+          <span id="step-3-label" class="ml-2 text-sm font-medium text-slate-500">Testing</span>
+        </div>
+      </div>
+    </div>
+
+    <main>
+      <!-- Part A: Design Plan -->
+      <section id="part-a" class="bg-white rounded-2xl border border-slate-200 shadow-soft p-6 space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xl font-semibold">Part A - Design Plan</h2>
+          <span class="text-xs px-3 py-1 rounded-full bg-blue-100 text-blue-700 font-medium">Step 1 of 3</span>
+        </div>
+        <p class="text-slate-600">Describe your algorithm design, complexity analysis, correctness sketch, assumptions, and test plan.</p>
+        <textarea id="plan" class="min-h-[300px] w-full border rounded-xl p-4 text-sm" 
+                  placeholder="Describe algorithms, complexity, correctness sketch, assumptions, and test plan..."></textarea>
+        <div class="flex justify-end">
+          <button id="submit-part-a" class="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed">
+            Submit Part A
+          </button>
+        </div>
       </section>
 
-      <section class="bg-white rounded-2xl border border-slate-200 shadow-soft p-4 space-y-3">
+      <!-- Part B: Implementation -->
+      <section id="part-b" class="hidden bg-white rounded-2xl border border-slate-200 shadow-soft p-6 space-y-4">
         <div class="flex items-center justify-between">
-          <h2 class="font-semibold">Code (Python)</h2>
-          <span class="text-xs px-2 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700">Implementation</span>
+          <h2 class="text-xl font-semibold">Part B - Implementation</h2>
+          <span class="text-xs px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 font-medium">Step 2 of 3</span>
         </div>
-        <textarea id="code" class="min-h-[180px] w-full border rounded-xl p-3 font-mono" placeholder="Code here"></textarea>
+        <p class="text-slate-600">Implement your solution in Python. Make sure your code matches your design plan from Part A.</p>
+        <textarea id="code" class="min-h-[300px] w-full border rounded-xl p-4 font-mono text-sm" 
+                  placeholder="Write your Python code here..."></textarea>
+        <div class="flex justify-end">
+          <button id="submit-part-b" class="px-6 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed">
+            Submit Part B
+          </button>
+        </div>
       </section>
 
-      <section class="bg-white rounded-2xl border border-slate-200 shadow-soft p-4 space-y-3 md:col-span-2">
+      <!-- Part C: Testing -->
+      <section id="part-c" class="hidden bg-white rounded-2xl border border-slate-200 shadow-soft p-6 space-y-4">
         <div class="flex items-center justify-between">
-          <h2 class="font-semibold">Tests (/tests)</h2>
+          <h2 class="text-xl font-semibold">Part C - Testing</h2>
+          <span class="text-xs px-3 py-1 rounded-full bg-purple-100 text-purple-700 font-medium">Step 3 of 3</span>
         </div>
-        <textarea id="tests" class="min-h-[140px] w-full border rounded-xl p-3 font-mono" placeholder="Describe or paste tests"></textarea>
+        <p class="text-slate-600">Write comprehensive tests for your implementation. Include edge cases and test the correctness of your solution.</p>
+        <textarea id="tests" class="min-h-[300px] w-full border rounded-xl p-4 font-mono text-sm" 
+                  placeholder="Write your test cases here..."></textarea>
+        <div class="flex justify-end">
+          <button id="submit-part-c" class="px-6 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 disabled:bg-slate-300 disabled:cursor-not-allowed">
+            Submit Part C
+          </button>
+        </div>
       </section>
 
       <!-- Confidence Level Section -->
@@ -580,6 +625,55 @@
       }
     }
 
+    // Step management functions
+    let currentStep = 1;
+    let stepProgress = {
+      partA: false,
+      partB: false,
+      partC: false
+    };
+
+    function updateStepDisplay() {
+      // Update progress indicators
+      for (let i = 1; i <= 3; i++) {
+        const indicator = $(`step-${i}-indicator`);
+        const label = $(`step-${i}-label`);
+        
+        if (i < currentStep) {
+          // Completed steps
+          indicator.className = 'w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center text-sm font-semibold';
+          label.className = 'ml-2 text-sm font-medium text-green-600';
+        } else if (i === currentStep) {
+          // Current step
+          indicator.className = 'w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-semibold';
+          label.className = 'ml-2 text-sm font-medium text-blue-600';
+        } else {
+          // Future steps
+          indicator.className = 'w-8 h-8 rounded-full bg-slate-300 text-slate-500 flex items-center justify-center text-sm font-semibold';
+          label.className = 'ml-2 text-sm font-medium text-slate-500';
+        }
+      }
+
+      // Show/hide sections
+      $('part-a').classList.toggle('hidden', currentStep !== 1);
+      $('part-b').classList.toggle('hidden', currentStep !== 2);
+      $('part-c').classList.toggle('hidden', currentStep !== 3);
+    }
+
+    function moveToNextStep() {
+      if (currentStep < 3) {
+        currentStep++;
+        updateStepDisplay();
+      }
+    }
+
+    function canProceedToStep(step) {
+      if (step === 1) return true;
+      if (step === 2) return stepProgress.partA;
+      if (step === 3) return stepProgress.partA && stepProgress.partB;
+      return false;
+    }
+
     // Auth 
     async function login() {
       const user = $('login-username').value;
@@ -657,8 +751,12 @@
         $('user-page').classList.remove('hidden');
         $('user-name').textContent = username;
         
-        // Hide confidence section initially
+        // Initialize step display
+        updateStepDisplay();
+        
+        // Hide confidence section and generate button initially
         $('confidence-section').classList.add('hidden');
+        $('btn-generate').classList.add('hidden');
         
         await loadDraft();          // <-- restore from server on entry
         await checkFeedbackStatus();
@@ -685,6 +783,124 @@
         console.error('Failed to check submission history:', e);
         // If we can't check, assume it's not the first submission to be safe
         return false;
+      }
+    }
+
+    // Individual part submission functions
+    async function submitPartA() {
+      const plan = $('plan').value.trim();
+      
+      if (!plan) {
+        alert('❌ Please write your design plan before submitting Part A.');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_URL}/submit-part`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({
+            assignment: currentContext.assignment,
+            domain: currentContext.domain,
+            part: 'A',
+            plan: plan
+          })
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({ detail: 'Unknown error' }));
+          throw new Error(`❌ Failed to submit Part A: ${errorData.detail || 'Unknown error'}`);
+        }
+
+        stepProgress.partA = true;
+        alert('✅ Part A submitted successfully! You can now proceed to Part B.');
+        moveToNextStep();
+        
+        // Log the submission
+        logEvent('submit_part_a', currentContext.assignment, currentContext.domain);
+        
+      } catch (e) {
+        alert(e.message);
+        console.error('Part A submission failed:', e);
+      }
+    }
+
+    async function submitPartB() {
+      const code = $('code').value.trim();
+      
+      if (!code) {
+        alert('❌ Please write your code before submitting Part B.');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_URL}/submit-part`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({
+            assignment: currentContext.assignment,
+            domain: currentContext.domain,
+            part: 'B',
+            code: code
+          })
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({ detail: 'Unknown error' }));
+          throw new Error(`❌ Failed to submit Part B: ${errorData.detail || 'Unknown error'}`);
+        }
+
+        stepProgress.partB = true;
+        alert('✅ Part B submitted successfully! You can now proceed to Part C.');
+        moveToNextStep();
+        
+        // Log the submission
+        logEvent('submit_part_b', currentContext.assignment, currentContext.domain);
+        
+      } catch (e) {
+        alert(e.message);
+        console.error('Part B submission failed:', e);
+      }
+    }
+
+    async function submitPartC() {
+      const tests = $('tests').value.trim();
+      
+      if (!tests) {
+        alert('❌ Please write your tests before submitting Part C.');
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_URL}/submit-part`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({
+            assignment: currentContext.assignment,
+            domain: currentContext.domain,
+            part: 'C',
+            tests: tests
+          })
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({ detail: 'Unknown error' }));
+          throw new Error(`❌ Failed to submit Part C: ${errorData.detail || 'Unknown error'}`);
+        }
+
+        stepProgress.partC = true;
+        alert('✅ Part C submitted successfully! All parts completed. You can now generate feedback.');
+        
+        // Show confidence section and generate feedback button
+        $('confidence-section').classList.remove('hidden');
+        $('btn-generate').classList.remove('hidden');
+        
+        // Log the submission
+        logEvent('submit_part_c', currentContext.assignment, currentContext.domain);
+        
+      } catch (e) {
+        alert(e.message);
+        console.error('Part C submission failed:', e);
       }
     }
 
@@ -1433,6 +1649,11 @@ function renderSuggestionsOnly(data) {
     $('btn-admin-logout').addEventListener('click', logout);
     $('btn-submit').addEventListener('click', submitAssignment);
     $('btn-generate').addEventListener('click', generateFeedback);
+    
+    // Part submission event listeners
+    $('submit-part-a').addEventListener('click', submitPartA);
+    $('submit-part-b').addEventListener('click', submitPartB);
+    $('submit-part-c').addEventListener('click', submitPartC);
     $('btn-survey').addEventListener('click', () => {
       // Microsoft Form URL (haven't create) Remember it !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       window.open('https://forms.office.com/Pages/ResponsePage.aspx?id=gcLuqKOqrk2sm5o5i5IV54_UjzNC4lpOpZ41yDeiv7FURUJQMVMzRUVDTDZOVUIyMDdPUFY5T0g1MS4u', '_blank');

@@ -422,6 +422,19 @@ class QuestionResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class PartSubmissionRequest(BaseModel):
+    assignment: str
+    domain: str
+    part: str  # 'A', 'B', or 'C'
+    plan: Optional[str] = None
+    code: Optional[str] = None
+    tests: Optional[str] = None
+
+class PartSubmissionResponse(BaseModel):
+    success: bool
+    message: str
+    part: str
+
 # LLM prompts
 SYSTEM_PROMPT = """
 You are an educational meta-feedback assistant for university-level computing assignments.
@@ -695,6 +708,64 @@ def submit_assignment(
         domain=new_s.domain, plan=new_s.plan, code=new_s.code, tests=new_s.tests,
         confidence_level=new_s.confidence_level, timestamp=new_s.timestamp.isoformat(), has_feedback=False
     )
+
+@app.post("/submit-part", response_model=PartSubmissionResponse)
+def submit_part(
+    submission: PartSubmissionRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Submit individual parts (A, B, C) of an assignment"""
+    
+    # Validate part
+    if submission.part not in ['A', 'B', 'C']:
+        raise HTTPException(status_code=400, detail="Part must be 'A', 'B', or 'C'")
+    
+    # Check if this part has already been submitted
+    existing = db.query(Submission).filter(
+        Submission.username == current_user.username,
+        Submission.assignment == submission.assignment,
+        Submission.domain == submission.domain
+    ).first()
+    
+    if existing:
+        # Update existing submission with new part
+        if submission.part == 'A' and submission.plan:
+            existing.plan = submission.plan
+        elif submission.part == 'B' and submission.code:
+            existing.code = submission.code
+        elif submission.part == 'C' and submission.tests:
+            existing.tests = submission.tests
+        else:
+            raise HTTPException(status_code=400, detail=f"Invalid data for part {submission.part}")
+        
+        db.commit()
+        return PartSubmissionResponse(
+            success=True,
+            message=f"Part {submission.part} updated successfully",
+            part=submission.part
+        )
+    else:
+        # Create new submission with only the submitted part
+        new_s = Submission(
+            username=current_user.username,
+            assignment=submission.assignment,
+            domain=submission.domain,
+            plan=submission.plan if submission.part == 'A' else None,
+            code=submission.code if submission.part == 'B' else None,
+            tests=submission.tests if submission.part == 'C' else None,
+            confidence_level=None,
+            timestamp=get_utc_now()
+        )
+        db.add(new_s)
+        db.commit()
+        db.refresh(new_s)
+        
+        return PartSubmissionResponse(
+            success=True,
+            message=f"Part {submission.part} submitted successfully",
+            part=submission.part
+        )
 
 
 @app.get("/submissions", response_model=List[SubmissionResponse])
