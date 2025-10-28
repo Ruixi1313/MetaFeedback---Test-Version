@@ -173,11 +173,7 @@
     </main>
 
     <div class="flex items-center gap-3">
-      <button id="btn-submit" class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">Submit Assignment</button>
       <button id="btn-generate" class="hidden px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">Generate AI Feedback</button>
-      <button id="btn-survey" class="hidden px-4 py-2 rounded-xl bg-purple-600 text-white hover:bg-purple-700">Complete Survey</button>
-      <button id="btn-history" class="px-4 py-2 rounded-xl bg-slate-600 text-white hover:bg-slate-700">See Submission History</button>
-      <button id="btn-copy" class="px-4 py-2 rounded-xl border hover:bg-slate-50">Copy JSON</button>
       </div>
 
       <section id="output" class="hidden bg-white border border-slate-200 rounded-2xl shadow p-6">
@@ -202,20 +198,7 @@
       </section>
       
   
-      <!-- History Modal -->
-    <div id="history-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-2xl border border-slate-200 shadow-soft p-6 w-full max-w-4xl max-h-[80vh] overflow-y-auto">
-        <div class="flex items-center justify-between mb-6">
-          <h3 class="text-2xl font-bold">Submission History</h3>
-          <button id="close-history" class="text-slate-500 hover:text-slate-700 text-2xl">&times;</button>
-        </div>
-        
-        <div>
-          <h4 class="text-lg font-semibold mb-3 text-blue-600">Your Submissions</h4>
-          <div id="submissions-history" class="space-y-3 max-h-96 overflow-y-auto">
-          </div>
-        </div>
-      </div>
+      
       <!-- Success Modal -->
     <div id="success-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
       <div class="bg-white rounded-2xl border border-slate-200 shadow-soft p-6 w-full max-w-md">
@@ -450,64 +433,7 @@
       }
     }
 
-    // History modal functions
-    async function showHistory() {
-      $('history-modal').classList.remove('hidden');
-      await loadSubmissionsHistory();
-    }
-
-    function hideHistory() {
-      $('history-modal').classList.add('hidden');
-    }
-
-    async function loadSubmissionsHistory() {
-      try {
-        const res = await fetch(`${API_URL}/my-submissions`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const submissions = await res.json();
-        const container = $('submissions-history');
-        container.innerHTML = '';
-        
-        if (submissions.length === 0) {
-          container.innerHTML = '<p class="text-slate-500 text-center py-4">No Submission Record</p>';
-          return;
-        }
-        
-        submissions.forEach(sub => {
-          const el = document.createElement('div');
-          el.className = 'p-3 rounded-lg border bg-slate-50';
-          const time = new Date(sub.timestamp).toLocaleString('en-US', { 
-            timeZone: 'America/Los_Angeles',
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: false
-          });
-          el.innerHTML = `
-            <div class="flex items-start justify-between mb-2">
-              <div>
-                <span class="font-medium text-slate-900">${sub.assignment}</span>
-                <span class="ml-2 text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700">${sub.domain}</span>
-              </div>
-              <span class="text-xs text-slate-500">${time}</span>
-            </div>
-            <div class="text-sm text-slate-600">
-              <div><strong>Plan:</strong> ${(sub.plan || 'N/A').substring(0, 100)}${(sub.plan || '').length > 100 ? '...' : ''}</div>
-              <div><strong>Code:</strong> ${(sub.code || 'N/A').substring(0, 100)}${(sub.code || '').length > 100 ? '...' : ''}</div>
-              <div><strong>Tests:</strong> ${(sub.tests || 'N/A').substring(0, 100)}${(sub.tests || '').length > 100 ? '...' : ''}</div>
-            </div>
-          `;
-          container.appendChild(el);
-        });
-      } catch (e) {
-        console.error('Failed to load submissions history:', e);
-        $('submissions-history').innerHTML = '<p class="text-red-500 text-center py-4">Error loading submissions</p>';
-      }
-    }
+    
 
 
     function togglePassword(inputId, button) {
@@ -1003,24 +929,20 @@
         if (data.enabled) {
           // User has feedback enabled
           if (data.feedback_count >= data.max_feedback) {
-            // Reached max feedback, show survey button, hide feedback button
+            // Reached max feedback, hide feedback button
             $('btn-generate').classList.add('hidden');
-            $('btn-survey').classList.remove('hidden');
           } else if (data.feedback_count > 0) {
-            // After 1st feedback, show both survey and feedback buttons
+            // After 1st feedback, keep feedback button available
             $('btn-generate').classList.remove('hidden');
-            $('btn-survey').classList.remove('hidden');
             $('btn-generate').textContent = 'Get Meta-Feedback Again';
           } else {
-            // First feedback, show only feedback button
+            // First feedback, show feedback button
             $('btn-generate').classList.remove('hidden');
-            $('btn-survey').classList.add('hidden');
             $('btn-generate').textContent = 'Generate AI Feedback';
           }
         } else {
-          // Survey mode, show survey button, hide feedback button
+          // Survey mode, hide feedback button
           $('btn-generate').classList.add('hidden');
-          $('btn-survey').classList.remove('hidden');
         }
       } catch (e) { console.error('feedback-status', e); }
     }
@@ -1647,29 +1569,12 @@ function renderSuggestionsOnly(data) {
     });
     $('btn-logout').addEventListener('click', logout);
     $('btn-admin-logout').addEventListener('click', logout);
-    $('btn-submit').addEventListener('click', submitAssignment);
     $('btn-generate').addEventListener('click', generateFeedback);
     
     // Part submission event listeners
     $('submit-part-a').addEventListener('click', submitPartA);
     $('submit-part-b').addEventListener('click', submitPartB);
     $('submit-part-c').addEventListener('click', submitPartC);
-    $('btn-survey').addEventListener('click', () => {
-      // Microsoft Form URL (haven't create) Remember it !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      window.open('https://forms.office.com/Pages/ResponsePage.aspx?id=gcLuqKOqrk2sm5o5i5IV54_UjzNC4lpOpZ41yDeiv7FURUJQMVMzRUVDTDZOVUIyMDdPUFY5T0g1MS4u', '_blank');
-      logEvent('survey_click', currentContext.assignment, currentContext.domain);
-    });
-    $('btn-history').addEventListener('click', showHistory);
-    $('close-history').addEventListener('click', hideHistory);
-    $('history-modal').addEventListener('click', (e) => {
-      if (e.target === $('history-modal')) {
-        hideHistory();
-      }
-    });
-    $('btn-copy').addEventListener('click', () => {
-      const txt = JSON.stringify(window._lastJSON || {}, null, 2);
-      navigator.clipboard.writeText(txt);
-    });
 
     // Context Management Event Listeners
     $('btn-set-context').addEventListener('click', showContextModal);
