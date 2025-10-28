@@ -848,16 +848,13 @@ def check_feedback_status(current_user: User = Depends(get_current_user)):
     return {
         "enabled": current_user.feedback_enabled,
         "feedback_count": current_user.feedback_count,
-        "max_feedback": 2
+        "max_feedback": 999999
     }
 
 @app.post("/analyze", response_model=AnalyzeResponse)
 def analyze(submission: SubmissionCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     if not current_user.feedback_enabled:
         raise HTTPException(status_code=403, detail="AI feedback not enabled for your account")
-    
-    if current_user.feedback_count >= 2:
-        raise HTTPException(status_code=403, detail="You have reached the maximum number of feedback sessions (2)")
 
     # Log analyze start
     log_event(db, current_user.id, "analyze_start", submission.assignment, submission.domain)

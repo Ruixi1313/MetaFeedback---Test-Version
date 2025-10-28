@@ -149,6 +149,16 @@
       </section>
 
       
+      <!-- Timeout Modal -->
+      <div id="timeout-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-soft p-6 w-full max-w-md">
+          <h3 class="text-2xl font-bold mb-2">Time's Up</h3>
+          <p class="text-slate-700">You didn’t finish the current section within 10 minutes. Meta-Feedback has been automatically generated — please review the feedback and submit your answer.</p>
+          <div class="mt-6 flex justify-end gap-2">
+            <button id="ok-timeout" class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">OK</button>
+          </div>
+        </div>
+      </div>
     </main>
 
     <div class="flex items-center gap-3">
@@ -534,6 +544,7 @@
     const STEP_LIMIT_SECONDS = 10 * 60;
     let timers = { 1: null, 2: null, 3: null };
     let timeLeft = { 1: STEP_LIMIT_SECONDS, 2: STEP_LIMIT_SECONDS, 3: STEP_LIMIT_SECONDS };
+    let feedbackEligibility = { enabled: false, remaining: 0 };
 
     function formatTime(s) {
       const m = Math.floor(s / 60).toString().padStart(2, '0');
@@ -559,10 +570,13 @@
         } else {
           clearInterval(timers[step]);
           timers[step] = null;
-          // Time’s up: move to next step if available
-          if (step < 3) {
-            currentStep = step + 1;
-            updateStepDisplay();
+          // Time’s up: if not completed and AI feedback available, auto-generate and notify
+          const completed = (step === 1 && stepProgress.partA) || (step === 2 && stepProgress.partB) || (step === 3 && stepProgress.partC);
+          if (!completed && feedbackEligibility.enabled && feedbackEligibility.remaining > 0) {
+            generateFeedback().finally(() => {
+              const m = $('timeout-modal');
+              if (m) m.classList.remove('hidden');
+            });
           }
         }
       }, 1000);
@@ -950,6 +964,8 @@
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
+        feedbackEligibility.enabled = !!data.enabled;
+        feedbackEligibility.remaining = Math.max(0, (data.max_feedback || 0) - (data.feedback_count || 0));
         
         if (data.enabled) {
           // User has feedback enabled
@@ -1677,6 +1693,11 @@ function renderSuggestionsOnly(data) {
         el.classList.remove('hidden');
         el.textContent = '❌ Failed to disable.';
       }
+    });
+
+    // Timeout modal
+    $('ok-timeout').addEventListener('click', () => {
+      $('timeout-modal').classList.add('hidden');
     });
 
 
