@@ -224,6 +224,18 @@
       </div>
     </section>
 
+    <!-- AI Feedback Controls -->
+    <section class="bg-white rounded-2xl border border-slate-200 shadow-soft p-5">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-semibold">AI Feedback Controls</h2>
+      </div>
+      <div class="flex gap-3">
+        <button id="btn-enable-feedback-all" class="px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">Enable for All Users</button>
+        <button id="btn-disable-feedback-all" class="px-4 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700">Disable for All Users</button>
+      </div>
+      <p id="feedback-toggle-status" class="hidden mt-3 text-sm"></p>
+    </section>
+
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <section class="bg-white rounded-2xl border border-slate-200 shadow-soft p-5">
         <h2 class="text-xl font-semibold mb-4">Users</h2>
@@ -947,15 +959,23 @@
           } else if (data.feedback_count > 0) {
             // After 1st feedback, keep feedback button available
             $('btn-generate').classList.remove('hidden');
+            $('btn-generate').classList.remove('bg-slate-300','text-white','cursor-not-allowed');
+            $('btn-generate').classList.add('bg-emerald-600');
             $('btn-generate').textContent = 'Get Meta-Feedback Again';
           } else {
             // First feedback, show feedback button
             $('btn-generate').classList.remove('hidden');
+            $('btn-generate').classList.remove('bg-slate-300','text-white','cursor-not-allowed');
+            $('btn-generate').classList.add('bg-emerald-600');
             $('btn-generate').textContent = 'Generate AI Feedback';
           }
         } else {
-          // Survey mode, hide feedback button
-          $('btn-generate').classList.add('hidden');
+          // Disabled globally: show greyed-out button
+          $('btn-generate').classList.remove('hidden');
+          $('btn-generate').classList.remove('bg-emerald-600');
+          $('btn-generate').classList.add('bg-slate-300','text-white','cursor-not-allowed');
+          $('btn-generate').disabled = true;
+          $('btn-generate').textContent = 'AI Feedback Disabled';
         }
       } catch (e) { console.error('feedback-status', e); }
     }
@@ -1622,6 +1642,42 @@ function renderSuggestionsOnly(data) {
     // Confidence Level Management Event Listeners
     $('btn-refresh-confidence').addEventListener('click', loadConfidenceLevels);
     $('btn-delete-all-confidence').addEventListener('click', deleteAllConfidenceSubmissions);
+
+    // AI Feedback Controls (Admin)
+    $('btn-enable-feedback-all').addEventListener('click', async () => {
+      try {
+        const res = await fetch(`${API_URL}/admin/toggle-feedback-all`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ enabled: true })
+        });
+        const data = await res.json();
+        const el = $('feedback-toggle-status');
+        el.classList.remove('hidden');
+        el.textContent = res.ok ? `✅ Enabled AI feedback for ${data.affected} users.` : `❌ ${data.detail || 'Failed to enable.'}`;
+      } catch (e) {
+        const el = $('feedback-toggle-status');
+        el.classList.remove('hidden');
+        el.textContent = '❌ Failed to enable.';
+      }
+    });
+    $('btn-disable-feedback-all').addEventListener('click', async () => {
+      try {
+        const res = await fetch(`${API_URL}/admin/toggle-feedback-all`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ enabled: false })
+        });
+        const data = await res.json();
+        const el = $('feedback-toggle-status');
+        el.classList.remove('hidden');
+        el.textContent = res.ok ? `✅ Disabled AI feedback for ${data.affected} users.` : `❌ ${data.detail || 'Failed to disable.'}`;
+      } catch (e) {
+        const el = $('feedback-toggle-status');
+        el.classList.remove('hidden');
+        el.textContent = '❌ Failed to disable.';
+      }
+    });
 
 
     // Enter shortcuts

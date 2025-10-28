@@ -362,6 +362,9 @@ class FeedbackToggle(BaseModel):
     username: str
     enabled: bool
 
+class FeedbackGlobalToggle(BaseModel):
+    enabled: bool
+
 # REPLACE the existing AnalyzeResponse with this:
 class AnalyzeResponse(BaseModel):
     plan_suggestions: List[str]
@@ -830,6 +833,15 @@ def toggle_feedback(toggle: FeedbackToggle, admin: User = Depends(get_admin_user
     u.feedback_enabled = toggle.enabled
     db.commit()
     return {"success": True, "username": toggle.username, "enabled": toggle.enabled}
+
+@app.post("/admin/toggle-feedback-all")
+def toggle_feedback_all(toggle: FeedbackGlobalToggle, admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
+    """Enable/disable AI feedback for ALL non-admin users"""
+    users = db.query(User).filter(User.is_admin == False).all()
+    for u in users:
+        u.feedback_enabled = toggle.enabled
+    db.commit()
+    return {"success": True, "enabled": toggle.enabled, "affected": len(users)}
 
 @app.get("/feedback-status")
 def check_feedback_status(current_user: User = Depends(get_current_user)):
