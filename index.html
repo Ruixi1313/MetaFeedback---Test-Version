@@ -95,7 +95,10 @@
       <section id="part-a" class="bg-white rounded-2xl border border-slate-200 shadow-soft p-6 space-y-4">
         <div class="flex items-center justify-between">
           <h2 class="text-xl font-semibold">Part A - Design Plan</h2>
-          <span class="text-xs px-3 py-1 rounded-full bg-blue-100 text-blue-700 font-medium">Step 1 of 3</span>
+          <div class="flex items-center gap-3">
+            <span class="text-xs px-3 py-1 rounded-full bg-blue-100 text-blue-700 font-medium">Step 1 of 3</span>
+            <span id="timer-a" class="text-xs font-medium text-slate-500">10:00</span>
+          </div>
         </div>
         <p class="text-slate-600">Describe your algorithm design, complexity analysis, correctness sketch, assumptions, and test plan.</p>
         <textarea id="plan" class="min-h-[300px] w-full border rounded-xl p-4 text-sm" 
@@ -111,7 +114,10 @@
       <section id="part-b" class="hidden bg-white rounded-2xl border border-slate-200 shadow-soft p-6 space-y-4">
         <div class="flex items-center justify-between">
           <h2 class="text-xl font-semibold">Part B - Implementation</h2>
-          <span class="text-xs px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 font-medium">Step 2 of 3</span>
+          <div class="flex items-center gap-3">
+            <span class="text-xs px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 font-medium">Step 2 of 3</span>
+            <span id="timer-b" class="text-xs font-medium text-slate-500">10:00</span>
+          </div>
         </div>
         <p class="text-slate-600">Implement your solution in Python. Make sure your code matches your design plan from Part A.</p>
         <textarea id="code" class="min-h-[300px] w-full border rounded-xl p-4 font-mono text-sm" 
@@ -127,7 +133,10 @@
       <section id="part-c" class="hidden bg-white rounded-2xl border border-slate-200 shadow-soft p-6 space-y-4">
         <div class="flex items-center justify-between">
           <h2 class="text-xl font-semibold">Part C - Testing</h2>
-          <span class="text-xs px-3 py-1 rounded-full bg-purple-100 text-purple-700 font-medium">Step 3 of 3</span>
+          <div class="flex items-center gap-3">
+            <span class="text-xs px-3 py-1 rounded-full bg-purple-100 text-purple-700 font-medium">Step 3 of 3</span>
+            <span id="timer-c" class="text-xs font-medium text-slate-500">10:00</span>
+          </div>
         </div>
         <p class="text-slate-600">Write comprehensive tests for your implementation. Include edge cases and test the correctness of your solution.</p>
         <textarea id="tests" class="min-h-[300px] w-full border rounded-xl p-4 font-mono text-sm" 
@@ -139,37 +148,7 @@
         </div>
       </section>
 
-      <!-- Confidence Level Section -->
-      <section id="confidence-section" class="hidden bg-white rounded-2xl border border-slate-200 shadow-soft p-5 space-y-4">
-        <div class="flex items-center justify-between">
-          <h2 class="font-semibold">Confidence Level</h2>
-        </div>
-        
-        <div class="space-y-4">
-          <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <p class="text-sm text-blue-800">
-              Confidence Level reflects how strongly you believe your answer would work without major changes.
-            </p>
-          </div>
-          
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-2">Your Confidence Level</label>
-            <div class="flex items-center space-x-4">
-              <input type="range" id="confidence-slider" min="0" max="100" value="50" 
-                     class="flex-1 h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
-              <span id="confidence-value" class="text-lg font-semibold text-slate-700 w-16 text-center">50%</span>
-            </div>
-            <div class="flex justify-between text-xs text-slate-500 mt-1">
-              <span>0% (Not confident)</span>
-              <span>100% (Very confident)</span>
-            </div>
-          </div>
-          
-          <div class="flex gap-3">
-            <button id="btn-submit-confidence" class="px-4 py-2 rounded-xl bg-orange-600 text-white hover:bg-orange-700">Submit</button>
-          </div>
-        </div>
-      </section>
+      
     </main>
 
     <div class="flex items-center gap-3">
@@ -211,28 +190,7 @@
       </div>
     </div>
 
-    <!-- Confidence Modal -->
-    <div id="confidence-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-      <div class="bg-white rounded-2xl border border-slate-200 shadow-soft p-6 w-full max-w-md">
-        <h3 class="text-2xl font-bold mb-3">Confidence Level</h3>
-        <p class="text-slate-700 mb-4">
-          Confidence Level reflects how strongly you believe your answer would work without major changes.
-        </p>
-
-        <div class="mb-4">
-          <input id="confidence-slider" type="range" min="0" max="100" value="50" class="w-full">
-          <div class="text-sm text-slate-600 mt-1">
-            Selected: <span id="confidence-value" class="font-semibold">50</span>%
-          </div>
-        </div>
-
-        <div class="flex justify-end gap-2">
-          <button id="submit-confidence" class="px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700" disabled>
-            Submit Confidence
-          </button>
-        </div>
-      </div>
-    </div>
+    
     </div>
 
   </div>
@@ -559,6 +517,44 @@
       partC: false
     };
 
+    // Countdown timers per step (10 minutes each)
+    const STEP_LIMIT_SECONDS = 10 * 60;
+    let timers = { 1: null, 2: null, 3: null };
+    let timeLeft = { 1: STEP_LIMIT_SECONDS, 2: STEP_LIMIT_SECONDS, 3: STEP_LIMIT_SECONDS };
+
+    function formatTime(s) {
+      const m = Math.floor(s / 60).toString().padStart(2, '0');
+      const sec = (s % 60).toString().padStart(2, '0');
+      return `${m}:${sec}`;
+    }
+
+    function updateTimerDisplay(step) {
+      const el = step === 1 ? $('timer-a') : step === 2 ? $('timer-b') : $('timer-c');
+      if (el) el.textContent = formatTime(timeLeft[step]);
+    }
+
+    function startStepTimer(step) {
+      // Stop other timers
+      [1,2,3].forEach(s => { if (timers[s]) { clearInterval(timers[s]); timers[s] = null; } });
+      // Initialize display
+      updateTimerDisplay(step);
+      // Start countdown for this step
+      timers[step] = setInterval(() => {
+        if (timeLeft[step] > 0) {
+          timeLeft[step] -= 1;
+          updateTimerDisplay(step);
+        } else {
+          clearInterval(timers[step]);
+          timers[step] = null;
+          // Time’s up: move to next step if available
+          if (step < 3) {
+            currentStep = step + 1;
+            updateStepDisplay();
+          }
+        }
+      }, 1000);
+    }
+
     // Restore progress and step from server submissions for current assignment/domain
     async function restoreStepFromServer() {
       try {
@@ -576,7 +572,6 @@
 
         if (stepProgress.partC) {
           currentStep = 3;
-          $('confidence-section').classList.remove('hidden');
         } else if (stepProgress.partB) {
           currentStep = 3; // go to Part C next
         } else if (stepProgress.partA) {
@@ -614,6 +609,8 @@
       $('part-a').classList.toggle('hidden', currentStep !== 1);
       $('part-b').classList.toggle('hidden', currentStep !== 2);
       $('part-c').classList.toggle('hidden', currentStep !== 3);
+      // Start the countdown timer for the active step
+      startStepTimer(currentStep);
 
     }
 
@@ -724,8 +721,6 @@
       if (isAdmin) {
         $('admin-page').classList.remove('hidden');
         $('user-page').classList.add('hidden');
-        // Hide confidence modal for admin users
-        $('confidence-modal').classList.add('hidden');
         loadAdminData();
       } else {
         $('user-page').classList.remove('hidden');
@@ -736,8 +731,7 @@
         updateStepDisplay();
         enableStepClicks();
         
-        // Hide confidence section and generate button initially
-        $('confidence-section').classList.add('hidden');
+        // Hide generate button initially
         $('btn-generate').classList.add('hidden');
         
         await loadDraft();          // <-- restore from server on entry
@@ -873,8 +867,7 @@
         stepProgress.partC = true;
         alert('✅ Part C submitted successfully! All parts completed. You can now generate feedback.');
         
-        // Show confidence section and generate feedback button
-        $('confidence-section').classList.remove('hidden');
+        // Show generate feedback button
         $('btn-generate').classList.remove('hidden');
         
         // Log the submission
@@ -924,10 +917,7 @@
         // Check if this is the user's first submission
         const isFirstSubmission = await checkIfFirstSubmission();
         
-        // Only show confidence level section after first submission
-        if (isFirstSubmission) {
-          $('confidence-section').classList.remove('hidden');
-        }
+        // Confidence section removed
         
         await checkFeedbackStatus();
       } catch (e) {
@@ -935,45 +925,7 @@
       }
     }
 
-    function updateConfidenceValue() {
-      const value = $('confidence-slider').value;
-      $('confidence-value').textContent = value + '%';
-    }
-
-    async function submitConfidence() {
-      const confidenceLevel = parseInt($('confidence-slider').value);
-      
-      // Validate confidence level
-      if (isNaN(confidenceLevel) || confidenceLevel < 0 || confidenceLevel > 100) {
-        alert('❌ Please select a valid confidence level between 0% and 100%.');
-        return;
-      }
-      
-      try {
-        // Submit confidence level using current context
-        const res = await fetch(`${API_URL}/submission/confidence`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-          body: JSON.stringify({
-            assignment: currentContext.assignment,
-            domain: currentContext.domain,
-            confidence_level: confidenceLevel
-          })
-        });
-        
-        if (!res.ok) {
-          const errorData = await res.json().catch(() => ({ detail: 'Unknown error' }));
-          throw new Error(`❌ Failed to submit confidence level: ${errorData.detail || 'Unknown error'}`);
-        }
-        
-        alert('✅ Confidence Level Submitted!\n\nYour confidence level has been recorded.');
-        
-        // Hide the confidence section after submission
-        $('confidence-section').classList.add('hidden');
-      } catch (e) {
-        alert('❌ ' + e.message);
-      }
-    }
+    // Confidence section removed
 
     async function checkFeedbackStatus() {
       try {
@@ -1611,8 +1563,6 @@ function renderSuggestionsOnly(data) {
     // Events
     $('btn-login').addEventListener('click', login);
     $('btn-signup').addEventListener('click', signup);
-    $('confidence-slider').addEventListener('input', updateConfidenceValue);
-    $('btn-submit-confidence').addEventListener('click', submitConfidence);
     $('show-signup').addEventListener('click', () => {
       $('login-form').classList.add('hidden');
       $('signup-form').classList.remove('hidden');
