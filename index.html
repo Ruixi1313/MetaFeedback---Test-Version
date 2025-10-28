@@ -153,7 +153,7 @@
       <div id="timeout-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
         <div class="bg-white rounded-2xl border border-slate-200 shadow-soft p-6 w-full max-w-md">
           <h3 class="text-2xl font-bold mb-2">Time's Up</h3>
-          <p class="text-slate-700">You didn’t finish the current section within 10 minutes. Meta-Feedback has been automatically generated — please review the feedback and submit your answer.</p>
+          <p id="timeout-text" class="text-slate-700">You didn’t finish the current section within 10 minutes. Meta-Feedback has been automatically generated — please review the feedback and submit your answer.</p>
           <div class="mt-6 flex justify-end gap-2">
             <button id="ok-timeout" class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">OK</button>
           </div>
@@ -163,6 +163,7 @@
 
     <div class="flex items-center gap-3">
       <button id="btn-generate" class="hidden px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">Generate AI Feedback</button>
+      <span id="feedback-ready" class="hidden text-xs text-slate-500"></span>
       <button id="btn-survey" class="hidden px-4 py-2 rounded-xl bg-purple-600 text-white hover:bg-purple-700">Complete Survey</button>
       </div>
 
@@ -545,6 +546,50 @@
     let timers = { 1: null, 2: null, 3: null };
     let timeLeft = { 1: STEP_LIMIT_SECONDS, 2: STEP_LIMIT_SECONDS, 3: STEP_LIMIT_SECONDS };
     let feedbackEligibility = { enabled: false, remaining: 0 };
+    let feedbackCooldown = { active: false, endTime: 0, intervalId: null };
+
+    // Timer persistence helpers (per user + assignment + domain + step)
+    function getTimerStorageKey(step) {
+      const a = (currentContext.assignment || '').replace(/\s+/g, '_');
+      const d = (currentContext.domain || '').replace(/\s+/g, '_');
+      const u = (username || 'user');
+      return `mf_timer_${u}_${a}_${d}_step_${step}`;
+    }
+
+    function loadAllTimersFromStorage() {
+      [1,2,3].forEach(s => {
+        const key = getTimerStorageKey(s);
+        const raw = localStorage.getItem(key);
+        const val = parseInt(raw, 10);
+        if (Number.isFinite(val) && val >= 0 && val <= STEP_LIMIT_SECONDS) {
+          timeLeft[s] = val;
+        }
+        updateTimerDisplay(s);
+      });
+    }
+
+    function persistTimer(step) {
+      const key = getTimerStorageKey(step);
+      try { localStorage.setItem(key, String(Math.max(0, timeLeft[step] | 0))); } catch (_) {}
+    }
+
+    // Submission persistence helper (guards timeout popups for already-submitted steps)
+    function getSubmittedKey(step) {
+      const a = (currentContext.assignment || '').replace(/\s+/g, '_');
+      const d = (currentContext.domain || '').replace(/\s+/g, '_');
+      const u = (username || 'user');
+      return `mf_submitted_${u}_${a}_${d}_step_${step}`;
+    }
+    function markSubmitted(step) {
+      try { localStorage.setItem(getSubmittedKey(step), '1'); } catch(_) {}
+    }
+    function hasSubmittedStep(step) {
+      const local = localStorage.getItem(getSubmittedKey(step)) === '1';
+      if (step === 1) return local || !!stepProgress.partA;
+      if (step === 2) return local || !!stepProgress.partB;
+      if (step === 3) return local || !!stepProgress.partC;
+      return local;
+    }
 
     function formatTime(s) {
       const m = Math.floor(s / 60).toString().padStart(2, '0');
@@ -555,6 +600,7 @@
     function updateTimerDisplay(step) {
       const el = step === 1 ? $('timer-a') : step === 2 ? $('timer-b') : $('timer-c');
       if (el) el.textContent = formatTime(timeLeft[step]);
+      persistTimer(step);
     }
 
     function startStepTimer(step) {
@@ -570,13 +616,22 @@
         } else {
           clearInterval(timers[step]);
           timers[step] = null;
-          // Time’s up: if not completed and AI feedback available, auto-generate and notify
-          const completed = (step === 1 && stepProgress.partA) || (step === 2 && stepProgress.partB) || (step === 3 && stepProgress.partC);
-          if (!completed && feedbackEligibility.enabled && feedbackEligibility.remaining > 0) {
-            generateFeedback().finally(() => {
+          // Time’s up: show popups only if user never submitted this step
+          if (!hasSubmittedStep(step)) {
+            const textEl = $('timeout-text');
+            const msgGenerated = 'You didn’t finish the current section within 10 minutes. Meta-Feedback has been automatically generated — please review the feedback and submit your answer.';
+            const msgNoFeedback = 'Time is up — please proceed to the next section as soon as possible.';
+            if (feedbackEligibility.enabled && feedbackEligibility.remaining > 0) {
+              if (textEl) textEl.textContent = msgGenerated;
+              generateFeedback().finally(() => {
+                const m = $('timeout-modal');
+                if (m) m.classList.remove('hidden');
+              });
+            } else {
+              if (textEl) textEl.textContent = msgNoFeedback;
               const m = $('timeout-modal');
               if (m) m.classList.remove('hidden');
-            });
+            }
           }
         }
       }, 1000);
@@ -757,6 +812,8 @@
         
         // Restore step from server before initial render
         await restoreStepFromServer();
+        // Load persisted timers for this assignment/domain
+        loadAllTimersFromStorage();
         updateStepDisplay();
         enableStepClicks();
         
@@ -819,6 +876,7 @@
         }
 
         stepProgress.partA = true;
+        markSubmitted(1);
         alert('✅ Part A submitted successfully! You can now proceed to Part B.');
         moveToNextStep();
         
@@ -857,6 +915,7 @@
         }
 
         stepProgress.partB = true;
+        markSubmitted(2);
         alert('✅ Part B submitted successfully! You can now proceed to Part C.');
         moveToNextStep();
         
@@ -895,6 +954,7 @@
         }
 
         stepProgress.partC = true;
+        markSubmitted(3);
         alert('✅ Part C submitted successfully! All parts completed. You can now generate feedback.');
         
         // Show generate feedback button
@@ -968,6 +1028,8 @@
         feedbackEligibility.remaining = Math.max(0, (data.max_feedback || 0) - (data.feedback_count || 0));
         
         if (data.enabled) {
+          // Ensure 4-minute cooldown from first render if not already running
+          setupFeedbackCooldownIfNeeded();
           // User has feedback enabled
           if (data.feedback_count >= data.max_feedback) {
             // Reached max feedback, hide feedback button
@@ -992,8 +1054,54 @@
           $('btn-generate').classList.add('bg-slate-300','text-white','cursor-not-allowed');
           $('btn-generate').disabled = true;
           $('btn-generate').textContent = 'AI Feedback Disabled';
+          $('feedback-ready').classList.add('hidden');
         }
       } catch (e) { console.error('feedback-status', e); }
+    }
+
+    function setupFeedbackCooldownIfNeeded() {
+      const readyLabel = $('feedback-ready');
+      if (!readyLabel) return;
+      const key = `mf_fb_cooldown_${username}`;
+      let end = feedbackCooldown.endTime;
+      if (!end) {
+        const stored = parseInt(localStorage.getItem(key) || '0', 10);
+        const now = Date.now();
+        if (stored && stored > now) {
+          end = stored;
+        } else {
+          end = now + 4 * 60 * 1000; // 4 minutes
+          try { localStorage.setItem(key, String(end)); } catch(_) {}
+        }
+        feedbackCooldown.endTime = end;
+      }
+      const update = () => {
+        const now = Date.now();
+        const ms = end - now;
+        if (ms > 0) {
+          const sec = Math.ceil(ms / 1000);
+          const m = Math.floor(sec / 60).toString().padStart(2,'0');
+          const s = (sec % 60).toString().padStart(2,'0');
+          readyLabel.textContent = `Generate AI Feedback is ready to show in ${m}:${s}`;
+          readyLabel.classList.remove('hidden');
+          // Force disabled style during cooldown
+          $('btn-generate').classList.remove('bg-emerald-600');
+          $('btn-generate').classList.add('bg-slate-300','text-white','cursor-not-allowed');
+          $('btn-generate').disabled = true;
+        } else {
+          // Cooldown complete
+          readyLabel.classList.add('hidden');
+          $('btn-generate').classList.remove('bg-slate-300','text-white','cursor-not-allowed');
+          $('btn-generate').classList.add('bg-emerald-600');
+          $('btn-generate').disabled = false;
+          if (feedbackCooldown.intervalId) clearInterval(feedbackCooldown.intervalId);
+          feedbackCooldown.intervalId = null;
+          try { localStorage.removeItem(key); } catch(_) {}
+        }
+      };
+      if (feedbackCooldown.intervalId) return; // already running
+      update();
+      feedbackCooldown.intervalId = setInterval(update, 1000);
     }
 
     async function generateFeedback() {
