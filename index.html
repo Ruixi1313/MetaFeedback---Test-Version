@@ -806,6 +806,7 @@
         $('admin-page').classList.remove('hidden');
         $('user-page').classList.add('hidden');
         loadAdminData();
+        restoreGlobalFeedbackStatus();
       } else {
         $('user-page').classList.remove('hidden');
         $('user-name').textContent = username;
@@ -1768,6 +1769,22 @@ function renderSuggestionsOnly(data) {
     $('btn-delete-all-confidence').addEventListener('click', deleteAllConfidenceSubmissions);
 
     // AI Feedback Controls (Admin)
+    function setGlobalFeedbackStatus(message) {
+      const el = $('feedback-toggle-status');
+      if (!el) return;
+      el.classList.remove('hidden');
+      el.textContent = message;
+      try { localStorage.setItem('mf_feedback_all_status_message', message); } catch (_) {}
+    }
+    function restoreGlobalFeedbackStatus() {
+      const el = $('feedback-toggle-status');
+      if (!el) return;
+      const msg = localStorage.getItem('mf_feedback_all_status_message');
+      if (msg) {
+        el.classList.remove('hidden');
+        el.textContent = msg;
+      }
+    }
     $('btn-enable-feedback-all').addEventListener('click', async () => {
       try {
         const res = await fetch(`${API_URL}/admin/toggle-feedback-all`, {
@@ -1776,13 +1793,13 @@ function renderSuggestionsOnly(data) {
           body: JSON.stringify({ enabled: true })
         });
         const data = await res.json();
-        const el = $('feedback-toggle-status');
-        el.classList.remove('hidden');
-        el.textContent = res.ok ? `✅ Enabled AI feedback for ${data.affected} users.` : `❌ ${data.detail || 'Failed to enable.'}`;
+        if (res.ok) {
+          setGlobalFeedbackStatus(`✅ Enabled AI feedback for ${data.affected} users.`);
+        } else {
+          setGlobalFeedbackStatus(`❌ ${data.detail || 'Failed to enable.'}`);
+        }
       } catch (e) {
-        const el = $('feedback-toggle-status');
-        el.classList.remove('hidden');
-        el.textContent = '❌ Failed to enable.';
+        setGlobalFeedbackStatus('❌ Failed to enable.');
       }
     });
     $('btn-disable-feedback-all').addEventListener('click', async () => {
@@ -1793,13 +1810,13 @@ function renderSuggestionsOnly(data) {
           body: JSON.stringify({ enabled: false })
         });
         const data = await res.json();
-        const el = $('feedback-toggle-status');
-        el.classList.remove('hidden');
-        el.textContent = res.ok ? `✅ Disabled AI feedback for ${data.affected} users.` : `❌ ${data.detail || 'Failed to disable.'}`;
+        if (res.ok) {
+          setGlobalFeedbackStatus(`✅ Disabled AI feedback for ${data.affected} users.`);
+        } else {
+          setGlobalFeedbackStatus(`❌ ${data.detail || 'Failed to disable.'}`);
+        }
       } catch (e) {
-        const el = $('feedback-toggle-status');
-        el.classList.remove('hidden');
-        el.textContent = '❌ Failed to disable.';
+        setGlobalFeedbackStatus('❌ Failed to disable.');
       }
     });
 

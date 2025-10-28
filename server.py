@@ -792,7 +792,7 @@ def get_all_submissions(admin: User = Depends(get_admin_user), db: Session = Dep
     return [
         SubmissionResponse(
             id=s.id, username=s.username, assignment=s.assignment, domain=s.domain,
-            plan=s.plan, code=s.code, tests=s.tests, confidence_level=s.confidence_level,
+            plan=s.plan or "", code=s.code or "", tests=s.tests or "", confidence_level=s.confidence_level,
             timestamp=to_pst_string(s.timestamp), has_feedback=False
         )
         for s in rows
@@ -814,7 +814,7 @@ def get_my_submissions(
     return [
         SubmissionResponse(
             id=s.id, username=s.username, assignment=s.assignment, domain=s.domain,
-            plan=s.plan, code=s.code, tests=s.tests, confidence_level=s.confidence_level,
+            plan=s.plan or "", code=s.code or "", tests=s.tests or "", confidence_level=s.confidence_level,
             timestamp=to_pst_string(s.timestamp), has_feedback=False
         )
         for s in rows
@@ -1205,7 +1205,7 @@ def get_submissions_by_confidence(admin: User = Depends(get_admin_user), db: Ses
     return [
         SubmissionResponse(
             id=s.id, username=s.username, assignment=s.assignment, domain=s.domain,
-            plan=s.plan, code=s.code, tests=s.tests, confidence_level=s.confidence_level,
+            plan=s.plan or "", code=s.code or "", tests=s.tests or "", confidence_level=s.confidence_level,
             timestamp=to_pst_string(s.timestamp), has_feedback=False
         )
         for s in rows
