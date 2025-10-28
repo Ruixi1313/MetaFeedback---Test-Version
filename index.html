@@ -559,6 +559,36 @@
       partC: false
     };
 
+    // Restore progress and step from server submissions for current assignment/domain
+    async function restoreStepFromServer() {
+      try {
+        const res = await fetch(`${API_URL}/my-submissions?assignment=${encodeURIComponent(currentContext.assignment)}&domain=${encodeURIComponent(currentContext.domain)}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) return;
+        const submissions = await res.json();
+        if (!Array.isArray(submissions) || submissions.length === 0) return;
+        const latest = submissions[0]; // API returns newest first
+
+        stepProgress.partA = !!(latest.plan && latest.plan.trim());
+        stepProgress.partB = !!(latest.code && latest.code.trim());
+        stepProgress.partC = !!(latest.tests && latest.tests.trim());
+
+        if (stepProgress.partC) {
+          currentStep = 3;
+          $('confidence-section').classList.remove('hidden');
+        } else if (stepProgress.partB) {
+          currentStep = 3; // go to Part C next
+        } else if (stepProgress.partA) {
+          currentStep = 2; // go to Part B next
+        } else {
+          currentStep = 1;
+        }
+      } catch (e) {
+        console.warn('restoreStepFromServer failed', e);
+      }
+    }
+
     function updateStepDisplay() {
       // Update progress indicators
       for (let i = 1; i <= 3; i++) {
@@ -584,6 +614,28 @@
       $('part-a').classList.toggle('hidden', currentStep !== 1);
       $('part-b').classList.toggle('hidden', currentStep !== 2);
       $('part-c').classList.toggle('hidden', currentStep !== 3);
+
+    }
+
+    // Allow clicking progress indicators to navigate to any step already reached
+    function enableStepClicks() {
+      const steps = [1,2,3];
+      steps.forEach(i => {
+        const target = $(`step-${i}-indicator`);
+        const label = $(`step-${i}-label`);
+        const handler = () => {
+          // Permit moving forward up to the farthest completed+1
+          const farthest = stepProgress.partC ? 3 : stepProgress.partB ? 3 : stepProgress.partA ? 2 : 1;
+          if (i <= farthest) {
+            currentStep = i;
+            updateStepDisplay();
+          }
+        };
+        target.style.cursor = 'pointer';
+        label.style.cursor = 'pointer';
+        target.addEventListener('click', handler);
+        label.addEventListener('click', handler);
+      });
     }
 
     function moveToNextStep() {
@@ -599,6 +651,8 @@
       if (step === 3) return stepProgress.partA && stepProgress.partB;
       return false;
     }
+
+    
 
     // Auth 
     async function login() {
@@ -677,8 +731,10 @@
         $('user-page').classList.remove('hidden');
         $('user-name').textContent = username;
         
-        // Initialize step display
+        // Restore step from server before initial render
+        await restoreStepFromServer();
         updateStepDisplay();
+        enableStepClicks();
         
         // Hide confidence section and generate button initially
         $('confidence-section').classList.add('hidden');
