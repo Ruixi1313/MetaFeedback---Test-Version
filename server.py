@@ -726,57 +726,61 @@ def submit_part(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """Submit individual parts (A, B, C) of an assignment"""
-    
-    # Validate part
+    """Submit individual parts (A, B, C) of an assignment.
+    Always creates a new Submission row to preserve full version history.
+    If a previous submission exists, copy its other parts so the latest row
+    contains the most recent Plan/Code/Tests together.
+    """
+
     if submission.part not in ['A', 'B', 'C']:
         raise HTTPException(status_code=400, detail="Part must be 'A', 'B', or 'C'")
+
+    # Get latest submission for this user+assignment+domain (if any)
+    latest = (db.query(Submission)
+                .filter(Submission.username == current_user.username,
+                        Submission.assignment == submission.assignment,
+                        Submission.domain == submission.domain)
+                .order_by(Submission.timestamp.desc())
+                .first())
+
+    # Start with previous values if they exist
+    new_plan = latest.plan if latest else None
+    new_code = latest.code if latest else None
+    new_tests = latest.tests if latest else None
+
+    # Apply incoming part change
+    if submission.part == 'A':
+        if not submission.plan:
+            raise HTTPException(status_code=400, detail="Missing 'plan' for part A")
+        new_plan = submission.plan
+    elif submission.part == 'B':
+        if not submission.code:
+            raise HTTPException(status_code=400, detail="Missing 'code' for part B")
+        new_code = submission.code
+    elif submission.part == 'C':
+        if not submission.tests:
+            raise HTTPException(status_code=400, detail="Missing 'tests' for part C")
+        new_tests = submission.tests
+
+    # Create a new versioned submission row
+    new_s = Submission(
+        username=current_user.username,
+        assignment=submission.assignment,
+        domain=submission.domain,
+        plan=new_plan,
+        code=new_code,
+        tests=new_tests,
+        confidence_level=None,
+        timestamp=get_utc_now()
+    )
+    db.add(new_s)
+    db.commit()
     
-    # Check if this part has already been submitted
-    existing = db.query(Submission).filter(
-        Submission.username == current_user.username,
-        Submission.assignment == submission.assignment,
-        Submission.domain == submission.domain
-    ).first()
-    
-    if existing:
-        # Update existing submission with new part
-        if submission.part == 'A' and submission.plan:
-            existing.plan = submission.plan
-        elif submission.part == 'B' and submission.code:
-            existing.code = submission.code
-        elif submission.part == 'C' and submission.tests:
-            existing.tests = submission.tests
-        else:
-            raise HTTPException(status_code=400, detail=f"Invalid data for part {submission.part}")
-        
-        db.commit()
-        return PartSubmissionResponse(
-            success=True,
-            message=f"Part {submission.part} updated successfully",
-            part=submission.part
-        )
-    else:
-        # Create new submission with only the submitted part
-        new_s = Submission(
-            username=current_user.username,
-            assignment=submission.assignment,
-            domain=submission.domain,
-            plan=submission.plan if submission.part == 'A' else None,
-            code=submission.code if submission.part == 'B' else None,
-            tests=submission.tests if submission.part == 'C' else None,
-            confidence_level=None,
-            timestamp=get_utc_now()
-        )
-        db.add(new_s)
-        db.commit()
-        db.refresh(new_s)
-        
-        return PartSubmissionResponse(
-            success=True,
-            message=f"Part {submission.part} submitted successfully",
-            part=submission.part
-        )
+    return PartSubmissionResponse(
+        success=True,
+        message=f"Part {submission.part} submitted successfully",
+        part=submission.part
+    )
 
 
 @app.get("/submissions", response_model=List[SubmissionResponse])
@@ -792,9 +796,18 @@ def get_all_submissions(admin: User = Depends(get_admin_user), db: Session = Dep
     ]
 
 @app.get("/my-submissions", response_model=List[SubmissionResponse])
-def get_my_submissions(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    rows = db.query(Submission).filter(Submission.username == current_user.username)\
-                               .order_by(Submission.timestamp.desc()).all()
+def get_my_submissions(
+    assignment: Optional[str] = None,
+    domain: Optional[str] = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    query = db.query(Submission).filter(Submission.username == current_user.username)
+    if assignment:
+        query = query.filter(Submission.assignment == assignment)
+    if domain:
+        query = query.filter(Submission.domain == domain)
+    rows = query.order_by(Submission.timestamp.desc()).all()
     return [
         SubmissionResponse(
             id=s.id, username=s.username, assignment=s.assignment, domain=s.domain,
