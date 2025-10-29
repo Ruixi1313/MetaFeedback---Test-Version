@@ -371,6 +371,18 @@ class AnalyzeResponse(BaseModel):
     code_suggestions: List[str]
     test_suggestions: List[str]
     summary: Optional[str] = None
+class EvaluateRequest(BaseModel):
+    assignment: str
+    domain: str
+    part: str  # 'A' (Plan), 'B' (Code), 'C' (Tests)
+    plan: Optional[str] = None
+    code: Optional[str] = None
+    tests: Optional[str] = None
+
+class EvaluateResponse(BaseModel):
+    is_correct: bool
+    reason: str
+
 
 
 class DraftIn(BaseModel):
@@ -919,6 +931,107 @@ def analyze(submission: SubmissionCreate, current_user: User = Depends(get_curre
         test_suggestions=result.get("test_suggestions", []),
         summary=result.get("summary", None)
     )
+
+@app.post("/evaluate-correctness", response_model=EvaluateResponse)
+def evaluate_correctness(payload: EvaluateRequest, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """Use GPT to check whether the user's submission is correct/complete enough to proceed."""
+    if payload.part not in ['A','B','C']:
+        raise HTTPException(status_code=400, detail="part must be 'A', 'B', or 'C'")
+    # Fetch assignment question for context
+    question = db.query(Question).filter(
+        Question.assignment == payload.assignment,
+        Question.domain == payload.domain
+    ).first()
+    question_text = question.question_text if question else ""
+
+    global client
+    if client is None:
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            # Return graceful 200 so frontend can keep the gating experience without a 500
+            return EvaluateResponse(is_correct=False, reason="Evaluation service is not configured. Contact admin.")
+        client = OpenAI(api_key=api_key)
+
+    # Build evaluation prompt for JSON Boolean verdict
+    # Section-specific framing
+    if payload.part == 'A':
+        section_name = 'DESIGN_PLAN'
+        section_text = (payload.plan or '').strip()
+        guidance = (
+            "Evaluate ONLY the Design Plan for algorithm design clarity, correctness reasoning, and feasibility. "
+            "Ignore code and tests."
+        )
+    elif payload.part == 'B':
+        section_name = 'CODE'
+        section_text = (payload.code or '').strip()
+        guidance = (
+            "Evaluate ONLY the Code for correctness relative to the assignment question. "
+            "Consider edge cases and algorithmic complexity, but ignore plan and tests."
+        )
+    else:
+        section_name = 'TESTS'
+        section_text = (payload.tests or '').strip()
+        guidance = (
+            "Evaluate ONLY the Tests for adequacy and coverage of typical and edge cases. "
+            "Ignore plan and code details except as needed to judge coverage."
+        )
+
+    eval_user_msg = (
+        f"[ASSIGNMENT QUESTION]\n{question_text}\n\n"
+        f"[{section_name}]\n{section_text}\n\n"
+        f"{guidance} Return STRICT JSON with keys: is_correct (true/false) and reason (short sentence)."
+    )
+    try:
+        resp = client.chat.completions.create(
+            model=OPENAI_MODEL,
+            messages=[
+                {"role": "system", "content": "You are a strict evaluator. Output JSON only with keys is_correct (boolean) and reason (string)."},
+                {"role": "user", "content": eval_user_msg},
+            ],
+            temperature=0.0,
+            response_format={"type": "json_object"},
+        )
+        import json, re
+        content = resp.choices[0].message.content
+        try:
+            data = json.loads(content)
+        except Exception:
+            # Fallback: try to detect boolean in free-form text
+            low = (content or "").lower()
+            is_correct = '"is_correct":true' in low or 'is_correct": true' in low or re.search(r'\btrue\b', low) is not None
+            reason = content[:200] if content else "Evaluation complete."
+            return EvaluateResponse(is_correct=bool(is_correct), reason=reason)
+        is_correct = bool(data.get("is_correct", False))
+        reason = str(data.get("reason", "Evaluation complete."))
+        return EvaluateResponse(is_correct=is_correct, reason=reason)
+    except Exception as e:
+        # Graceful failure: do not 500; return not-correct with reason
+        return EvaluateResponse(is_correct=False, reason=f"Evaluation error: {e}")
+
+@app.get("/admin/health-evaluator")
+def get_users_healthcheck(admin: User = Depends(get_admin_user)):
+    try:
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            return {"ok": False, "message": "OPENAI_API_KEY is not configured."}
+        global client
+        if client is None:
+            client = OpenAI(api_key=api_key)
+        try:
+            resp = client.chat.completions.create(
+                model=OPENAI_MODEL,
+                messages=[{"role": "system", "content": "Reply with ok"}, {"role": "user", "content": "ok"}],
+                temperature=0.0,
+                max_tokens=2,
+            )
+            content = (resp.choices[0].message.content or "").strip().lower()
+            if "ok" in content:
+                return {"ok": True, "message": "Evaluator connected."}
+            return {"ok": False, "message": f"Unexpected reply: {content[:50]}"}
+        except Exception as e:
+            return {"ok": False, "message": f"OpenAI call failed: {e}"}
+    except Exception as e:
+        return {"ok": False, "message": f"Health check error: {e}"}
 @app.get("/users")
 def get_users(admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
     users = db.query(User).all()

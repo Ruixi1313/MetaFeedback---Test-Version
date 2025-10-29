@@ -274,6 +274,18 @@
       <p id="feedback-toggle-status" class="hidden mt-3 text-sm"></p>
     </section>
 
+    <!-- Evaluator Health -->
+    <section class="bg-white rounded-2xl border border-slate-200 shadow-soft p-5">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-semibold">Evaluator Health</h2>
+        <button id="btn-check-evaluator" class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">Check Now</button>
+      </div>
+      <div class="flex items-center gap-3">
+        <span id="eval-status-chip" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-200 text-slate-700">Unknown</span>
+        <span id="eval-status-msg" class="text-sm text-slate-600"></span>
+      </div>
+    </section>
+
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <section class="bg-white rounded-2xl border border-slate-200 shadow-soft p-5">
         <h2 class="text-xl font-semibold mb-4">Users</h2>
@@ -856,6 +868,7 @@
         $('user-page').classList.add('hidden');
         loadAdminData();
         restoreGlobalFeedbackStatus();
+        checkEvaluatorHealth();
       } else {
         $('user-page').classList.remove('hidden');
         $('user-name').textContent = username;
@@ -905,6 +918,7 @@
     }
 
     // Individual part submission functions
+    let lastSubmittedStep = null;
     async function submitPartA() {
       const plan = $('plan').value.trim();
       
@@ -932,8 +946,8 @@
 
         stepProgress.partA = true;
         markSubmitted(1);
-        alert('✅ Part A submitted successfully! You can now proceed to Part B.');
-        moveToNextStep();
+        alert('✅ Part A submitted successfully!');
+        lastSubmittedStep = 1;
         showConfidenceModal();
         
         // Log the submission
@@ -972,8 +986,8 @@
 
         stepProgress.partB = true;
         markSubmitted(2);
-        alert('✅ Part B submitted successfully! You can now proceed to Part C.');
-        moveToNextStep();
+        alert('✅ Part B submitted successfully!');
+        lastSubmittedStep = 2;
         showConfidenceModal();
         
         // Log the submission
@@ -1012,10 +1026,11 @@
 
         stepProgress.partC = true;
         markSubmitted(3);
-        alert('✅ Part C submitted successfully! All parts completed. You can now generate feedback.');
+        alert('✅ Part C submitted successfully!');
         
         // Show generate feedback button
         $('btn-generate').classList.remove('hidden');
+        lastSubmittedStep = 3;
         showConfidenceModal();
         $('btn-survey').classList.remove('hidden');
         
@@ -1842,6 +1857,26 @@ function renderSuggestionsOnly(data) {
         el.textContent = msg;
       }
     }
+    async function checkEvaluatorHealth() {
+      const chip = $('eval-status-chip');
+      const msg = $('eval-status-msg');
+      try {
+        const res = await fetch(`${API_URL}/admin/health-evaluator`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        if (data.ok) {
+          chip.textContent = 'Connected';
+          chip.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700';
+        } else {
+          chip.textContent = 'Disconnected';
+          chip.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700';
+        }
+        msg.textContent = data.message || '';
+      } catch (e) {
+        chip.textContent = 'Disconnected';
+        chip.className = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700';
+        msg.textContent = 'Health check failed';
+      }
+    }
     $('btn-enable-feedback-all').addEventListener('click', async () => {
       try {
         const res = await fetch(`${API_URL}/admin/toggle-feedback-all`, {
@@ -1902,6 +1937,7 @@ function renderSuggestionsOnly(data) {
     async function submitConfidenceLevel() {
       const lvl = parseInt($('conf-slider').value, 10);
       try {
+        // 1) Save confidence
         const res = await fetch(`${API_URL}/submission/confidence`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -1911,13 +1947,56 @@ function renderSuggestionsOnly(data) {
           const err = await res.json().catch(() => ({}));
           throw new Error(err.detail || 'Failed to submit confidence');
         }
+        // 2) Evaluate correctness using GPT
+        $('conf-submit').disabled = true;
+        const oldTxt = $('conf-submit').textContent;
+        $('conf-submit').textContent = 'Evaluating…';
+        // Section-specific payload
+        let evalPayload = {
+          assignment: currentContext.assignment,
+          domain: currentContext.domain,
+          part: lastSubmittedStep === 1 ? 'A' : lastSubmittedStep === 2 ? 'B' : 'C'
+        };
+        if (lastSubmittedStep === 1) evalPayload.plan = $('plan').value;
+        if (lastSubmittedStep === 2) evalPayload.code = $('code').value;
+        if (lastSubmittedStep === 3) evalPayload.tests = $('tests').value;
+        const ev = await fetch(`${API_URL}/evaluate-correctness`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify(evalPayload)
+        });
+        const evData = await ev.json();
+        $('conf-submit').disabled = false;
+        $('conf-submit').textContent = oldTxt;
         hideConfidenceModal();
-        alert('✅ Confidence saved');
+
+        if (ev.ok && evData && typeof evData.is_correct !== 'undefined') {
+          // Gate: must be correct AND confidence > 40% to proceed
+          if (evData.is_correct && lvl > 40) {
+            moveToNextStep();
+          } else if (evData.is_correct && lvl <= 40) {
+            alert('⚠️ Your answer looks correct, but your confidence is low. Please reflect and increase confidence (> 40%) before moving on.');
+            if (feedbackEligibility.enabled && feedbackEligibility.remaining > 0) {
+              await generateFeedback();
+            }
+            if (lastSubmittedStep) { currentStep = lastSubmittedStep; updateStepDisplay(); }
+          } else {
+            alert('❌ Your response appears incorrect or incomplete. Please revise before continuing.\n\nReason: ' + (evData.reason || 'Needs improvement.'));
+            if (lastSubmittedStep) { currentStep = lastSubmittedStep; updateStepDisplay(); }
+          }
+        } else {
+          // If evaluation fails, do not block; simply notify
+          alert('⚠️ Confidence saved, but automatic evaluation failed. You may continue.');
+          moveToNextStep();
+        }
       } catch (e) {
         alert('❌ ' + (e.message || e));
       }
     }
     $('conf-submit').addEventListener('click', submitConfidenceLevel);
+
+    // Evaluator health
+    $('btn-check-evaluator').addEventListener('click', checkEvaluatorHealth);
 
     // Start timer consent
     $('start-timer-ok').addEventListener('click', () => {
