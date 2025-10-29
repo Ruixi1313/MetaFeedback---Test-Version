@@ -959,21 +959,21 @@ def evaluate_correctness(payload: EvaluateRequest, current_user: User = Depends(
         section_text = (payload.plan or '').strip()
         guidance = (
             "Evaluate ONLY the Design Plan for algorithm design clarity, correctness reasoning, and feasibility. "
-            "Ignore code and tests."
+            "Ignore code and tests. Be LENIENT about minor pseudocode or formatting issues; if the design is correct in intent and minor issues are easily fixable, mark is_correct=true."
         )
     elif payload.part == 'B':
         section_name = 'CODE'
         section_text = (payload.code or '').strip()
         guidance = (
             "Evaluate ONLY the Code for correctness relative to the assignment question. "
-            "Consider edge cases and algorithmic complexity, but ignore plan and tests."
+            "Consider edge cases and algorithmic complexity, but ignore plan and tests. Be LENIENT about minor pseudocode/syntax or off-by-one indexing errors (e.g., placing the key at j instead of j+1 in insertion sort) if the algorithmic intent is clearly correct and the fix is trivial; in such cases set is_correct=true and explain briefly."
         )
     else:
         section_name = 'TESTS'
         section_text = (payload.tests or '').strip()
         guidance = (
             "Evaluate ONLY the Tests for adequacy and coverage of typical and edge cases. "
-            "Ignore plan and code details except as needed to judge coverage."
+            "Ignore plan and code details except as needed to judge coverage. Be LENIENT if the test set reasonably covers core and edge cases even if naming/formatting is imperfect; in such cases mark is_correct=true."
         )
 
     eval_user_msg = (

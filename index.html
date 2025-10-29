@@ -1982,7 +1982,7 @@ function renderSuggestionsOnly(data) {
           if (evData.is_correct && lvl > 40) {
             moveToNextStep();
           } else if (evData.is_correct && lvl <= 40) {
-            alert('⚠️ Your answer looks correct, but your confidence is low. Please reflect and increase confidence (> 40%) before moving on.');
+            alert('Your answer appears correct, but your confidence level is low. You may choose to view feedback, reflect on it, and build confidence before proceeding to the next section.');
             if (feedbackEligibility.enabled && feedbackEligibility.remaining > 0) {
               await generateFeedback();
             }
