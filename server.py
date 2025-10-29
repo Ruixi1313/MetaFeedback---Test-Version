@@ -943,6 +943,7 @@ def evaluate_correctness(payload: EvaluateRequest, current_user: User = Depends(
         Question.domain == payload.domain
     ).first()
     question_text = question.question_text if question else ""
+    rubric_text = (question.rubric or "") if question else ""
 
     global client
     if client is None:
@@ -953,33 +954,57 @@ def evaluate_correctness(payload: EvaluateRequest, current_user: User = Depends(
         client = OpenAI(api_key=api_key)
 
     # Build evaluation prompt for JSON Boolean verdict
-    # Section-specific framing
+    # Section-specific framing (rubric-aware, generic across questions)
     if payload.part == 'A':
         section_name = 'DESIGN_PLAN'
         section_text = (payload.plan or '').strip()
-        guidance = (
-            "Evaluate ONLY the Design Plan. The plan must clearly include ALL of the following: "
-            "(1) chosen algorithm (Insertion/Bubble/Selection) with a brief justification tailored to this scenario; "
-            "(2) time complexity for the chosen algorithm specifically on reverse-sorted input; "
-            "(3) the key steps/phases of the algorithm; "
-            "(4) edge cases/special considerations to handle. "
-            "If ANY of these four items is missing or only vaguely implied (e.g., only naming the algorithm without justification, or omitting reverse-sorted complexity, or not listing steps, or not mentioning edge cases), set is_correct=false and briefly list what is missing in reason. "
-            "Minor formatting issues are acceptable, but completeness across the four required elements is mandatory."
-        )
+        if rubric_text:
+            guidance = (
+                "Evaluate ONLY the Design Plan against the assignment and the following rubric: "
+                f"\n{rubric_text}\n"
+                "The plan must explicitly address the key requirements implied by the question and rubric (approach/method and why it's appropriate, expected complexity or performance characteristics relevant to the scenario, main steps/phases, and important edge cases/assumptions). "
+                "If critical elements are missing or only vaguely implied, set is_correct=false and briefly list what is missing in reason."
+            )
+        else:
+            guidance = (
+                "Evaluate ONLY the Design Plan. The plan should clearly include: "
+                "(1) the intended approach/method and why it's appropriate for this question; "
+                "(2) expected time/space behavior or performance considerations relevant to the scenario; "
+                "(3) the key steps/phases of the solution; "
+                "(4) important edge cases or assumptions. "
+                "If any of these elements are missing or too vague to act on, set is_correct=false and briefly list what is missing in reason."
+            )
     elif payload.part == 'B':
         section_name = 'CODE'
         section_text = (payload.code or '').strip()
-        guidance = (
-            "Evaluate ONLY the Code for correctness relative to the assignment question. "
-            "Consider edge cases and algorithmic complexity, but ignore plan and tests. Be LENIENT about minor pseudocode/syntax or off-by-one indexing errors (e.g., placing the key at j instead of j+1 in insertion sort) if the algorithmic intent is clearly correct and the fix is trivial; in such cases set is_correct=true and explain briefly."
-        )
+        if rubric_text:
+            guidance = (
+                "Evaluate ONLY the Code for correctness relative to the assignment and rubric: "
+                f"\n{rubric_text}\n"
+                "Focus on whether the implementation satisfies the required behavior and handles key edge cases. "
+                "Be LENIENT about minor pseudocode/syntax issues or trivial off-by-one indexing mistakes when the algorithmic intent is clearly correct; in such cases set is_correct=true and explain briefly."
+            )
+        else:
+            guidance = (
+                "Evaluate ONLY the Code for correctness relative to the assignment question. "
+                "Consider edge cases and overall algorithmic/logic soundness, but ignore plan and tests. "
+                "Be LENIENT about minor pseudocode/syntax issues or trivial off-by-one indexing mistakes when the algorithmic intent is clearly correct; in such cases set is_correct=true and explain briefly."
+            )
     else:
         section_name = 'TESTS'
         section_text = (payload.tests or '').strip()
-        guidance = (
-            "Evaluate ONLY the Tests for adequacy and coverage of typical and edge cases. "
-            "Ignore plan and code details except as needed to judge coverage. Be LENIENT if the test set reasonably covers core and edge cases even if naming/formatting is imperfect; in such cases mark is_correct=true."
-        )
+        if rubric_text:
+            guidance = (
+                "Evaluate ONLY the Tests for adequacy and coverage against the assignment and rubric: "
+                f"\n{rubric_text}\n"
+                "Judge whether typical cases and important edge cases are covered well enough to detect likely defects. "
+                "Be LENIENT if coverage is reasonable even if naming/formatting is imperfect; in such cases mark is_correct=true."
+            )
+        else:
+            guidance = (
+                "Evaluate ONLY the Tests for adequacy and coverage of typical and edge cases. "
+                "Ignore plan and code details except as needed to judge coverage. Be LENIENT if the test set reasonably covers core and edge cases even if naming/formatting is imperfect; in such cases mark is_correct=true."
+            )
 
     eval_user_msg = (
         f"[ASSIGNMENT QUESTION]\n{question_text}\n\n"
