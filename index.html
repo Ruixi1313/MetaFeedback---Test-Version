@@ -596,6 +596,25 @@
     };
     // Parts that have passed evaluator + confidence gate
     let passedParts = { A: false, B: false, C: false };
+    // Persist/restore passed parts across refreshes per user+assignment+domain
+    function getPassedPartsStorageKey() {
+      const a = (currentContext.assignment || '').replace(/\s+/g, '_');
+      const d = (currentContext.domain || '').replace(/\s+/g, '_');
+      const u = (username || 'user');
+      return `mf_passed_parts_${u}_${a}_${d}`;
+    }
+    function persistPassedParts() {
+      try { localStorage.setItem(getPassedPartsStorageKey(), JSON.stringify(passedParts)); } catch(_) {}
+    }
+    function restorePassedPartsFromStorage() {
+      try {
+        const raw = localStorage.getItem(getPassedPartsStorageKey());
+        if (!raw) return;
+        const obj = JSON.parse(raw);
+        if (!obj) return;
+        passedParts.A = !!obj.A; passedParts.B = !!obj.B; passedParts.C = !!obj.C;
+      } catch(_) {}
+    }
     // Highest step number the user is allowed to open (1..3)
     let highestStepUnlocked = 1;
 
@@ -792,7 +811,6 @@
 
         if (stepProgress.partC) {
           currentStep = 3;
-          $('btn-survey').classList.remove('hidden');
           $('btn-generate').classList.remove('hidden');
           highestStepUnlocked = 3;
         } else if (stepProgress.partB) {
@@ -976,6 +994,7 @@
         
         // Restore step from server before initial render
         await restoreStepFromServer();
+        restorePassedPartsFromStorage();
         // Load persisted timers for this assignment/domain
         loadAllTimersFromStorage();
         // Determine if timers were already consented in this session (per user+assignment+domain)
@@ -1137,7 +1156,6 @@
         $('btn-generate').classList.remove('hidden');
         lastSubmittedStep = 3;
         showConfidenceModal();
-        $('btn-survey').classList.remove('hidden');
         
         // Log the submission
         logEvent('submit_part_c', currentContext.assignment, currentContext.domain);
@@ -2148,14 +2166,17 @@ function renderSuggestionsForPart(data, part) {
             if (lastSubmittedStep === 1) passedParts.A = true;
             if (lastSubmittedStep === 2) passedParts.B = true;
             if (lastSubmittedStep === 3) passedParts.C = true;
+            persistPassedParts();
             // Unlock next step
             if (lastSubmittedStep === 1) highestStepUnlocked = Math.max(highestStepUnlocked, 2);
             if (lastSubmittedStep === 2) highestStepUnlocked = Math.max(highestStepUnlocked, 3);
             moveToNextStep();
-            // Show survey button when Part C is correct with confidence > 40
-            if (lastSubmittedStep === 3) {
+            // If all sections are correct and this was Part C with confidence > 40, prompt survey
+            if (lastSubmittedStep === 3 && passedParts.A && passedParts.B && passedParts.C) {
               const btn = $('btn-survey');
               if (btn) btn.classList.remove('hidden');
+              try { markAllSectionsCorrect(); } catch(_) {}
+              alert('You have correct answer for all sections, Congratulation! Please complete the survey now!');
             }
           } else if (evData.is_correct && lvl <= 40) {
             alert('Your answer appears correct, but your confidence level is low. Meta-Feedback will be generated automatically — reflect on it and build confidence before proceeding to the next section.');
