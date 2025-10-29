@@ -24,9 +24,9 @@
       <div id="login-form">
         <h2 class="text-xl font-semibold mb-4">Login</h2>
         <div class="space-y-3">
-          <input id="login-username" type="text" placeholder="Username" class="w-full border rounded-xl px-4 py-2" />
+          <input id="login-username" type="text" placeholder="Username" class="w-full border rounded-xl px-4 py-2" autocomplete="username" autocapitalize="none" spellcheck="false" />
           <div class="relative">
-            <input id="login-password" type="password" placeholder="Password" class="w-full border rounded-xl px-4 py-2 pr-12" />
+            <input id="login-password" type="password" placeholder="Password" class="w-full border rounded-xl px-4 py-2 pr-12" autocomplete="current-password" />
             <button type="button" onclick="togglePassword('login-password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
             </button>
@@ -41,9 +41,9 @@
       <div id="signup-form" class="hidden">
         <h2 class="text-xl font-semibold mb-4">Sign Up</h2>
         <div class="space-y-3">
-          <input id="signup-username" type="text" placeholder="Username" class="w-full border rounded-xl px-4 py-2" />
+          <input id="signup-username" type="text" placeholder="Username" class="w-full border rounded-xl px-4 py-2" autocomplete="username" autocapitalize="none" spellcheck="false" />
           <div class="relative">
-            <input id="signup-password" type="password" placeholder="Password" class="w-full border rounded-xl px-4 py-2 pr-12" />
+            <input id="signup-password" type="password" placeholder="Password" class="w-full border rounded-xl px-4 py-2 pr-12" autocomplete="new-password" />
             <button type="button" onclick="togglePassword('signup-password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
             </button>
@@ -482,6 +482,16 @@
       const eyeOff = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" ...></svg>';
       if (input.type === 'password') { input.type = 'text'; button.innerHTML = eyeOff; }
       else { input.type = 'password'; button.innerHTML = eye; }
+    }
+
+    // Clear all auth inputs to avoid showing previous user's credentials
+    function clearAuthInputs() {
+      try {
+        const lu = document.getElementById('login-username'); if (lu) lu.value = '';
+        const lp = document.getElementById('login-password'); if (lp) lp.value = '';
+        const su = document.getElementById('signup-username'); if (su) su.value = '';
+        const sp = document.getElementById('signup-password'); if (sp) sp.value = '';
+      } catch(_) {}
     }
 
     let token = localStorage.getItem('token');
@@ -941,6 +951,7 @@
       $('auth-page').classList.remove('hidden');
       $('user-page').classList.add('hidden');
       $('admin-page').classList.add('hidden');
+      clearAuthInputs();
     }
 
     async function showDashboard() {
@@ -1929,11 +1940,13 @@ function renderSuggestionsForPart(data, part) {
       $('login-form').classList.add('hidden');
       $('signup-form').classList.remove('hidden');
       $('auth-error').classList.add('hidden');
+      clearAuthInputs();
     });
     $('show-login').addEventListener('click', () => {
       $('signup-form').classList.add('hidden');
       $('login-form').classList.remove('hidden');
       $('auth-error').classList.add('hidden');
+      clearAuthInputs();
     });
     $('btn-logout').addEventListener('click', logout);
     $('btn-admin-logout').addEventListener('click', logout);
@@ -2161,7 +2174,7 @@ function renderSuggestionsForPart(data, part) {
 
     // Init
     if (token) { showDashboard(); }
-    else { $('auth-page').classList.remove('hidden'); }
+    else { $('auth-page').classList.remove('hidden'); clearAuthInputs(); }
   </script>
 </body>
 </html>
