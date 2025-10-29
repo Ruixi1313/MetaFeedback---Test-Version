@@ -175,6 +175,17 @@
           </div>
         </div>
       </div>
+
+      <!-- Start Timer Modal (shown on first entry) -->
+      <div id="start-timer-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-soft p-6 w-full max-w-md">
+          <h3 class="text-2xl font-bold mb-2">Before You Begin</h3>
+          <p class="text-slate-700">You will have 10 minutes to complete each section. Click “OK” to start the timer.</p>
+          <div class="mt-6 flex justify-end gap-2">
+            <button id="start-timer-ok" class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">OK</button>
+          </div>
+        </div>
+      </div>
     </main>
 
     <div class="flex items-center gap-3">
@@ -563,6 +574,7 @@
     let timeLeft = { 1: STEP_LIMIT_SECONDS, 2: STEP_LIMIT_SECONDS, 3: STEP_LIMIT_SECONDS };
     let feedbackEligibility = { enabled: false, remaining: 0 };
     let feedbackCooldown = { active: false, endTime: 0, intervalId: null };
+    let timersEnabled = false;
 
     // Timer persistence helpers (per user + assignment + domain + step)
     function getTimerStorageKey(step) {
@@ -725,8 +737,13 @@
       $('part-a').classList.toggle('hidden', currentStep !== 1);
       $('part-b').classList.toggle('hidden', currentStep !== 2);
       $('part-c').classList.toggle('hidden', currentStep !== 3);
-      // Start the countdown timer for the active step
-      startStepTimer(currentStep);
+      // Start the countdown timer for the active step only after user confirms
+      if (timersEnabled) {
+        startStepTimer(currentStep);
+      } else {
+        // Ensure display shows remaining time without starting countdown yet
+        updateTimerDisplay(currentStep);
+      }
 
     }
 
@@ -847,6 +864,11 @@
         await restoreStepFromServer();
         // Load persisted timers for this assignment/domain
         loadAllTimersFromStorage();
+        // Determine if timers were already consented in this session
+        timersEnabled = sessionStorage.getItem('mf_timer_consent') === '1';
+        if (!timersEnabled) {
+          $('start-timer-modal').classList.remove('hidden');
+        }
         updateStepDisplay();
         enableStepClicks();
         
@@ -1896,6 +1918,15 @@ function renderSuggestionsOnly(data) {
       }
     }
     $('conf-submit').addEventListener('click', submitConfidenceLevel);
+
+    // Start timer consent
+    $('start-timer-ok').addEventListener('click', () => {
+      timersEnabled = true;
+      try { sessionStorage.setItem('mf_timer_consent', '1'); } catch(_) {}
+      $('start-timer-modal').classList.add('hidden');
+      // Now that consent is given, start the timer for current step
+      startStepTimer(currentStep);
+    });
 
 
     // Enter shortcuts
