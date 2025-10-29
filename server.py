@@ -958,8 +958,13 @@ def evaluate_correctness(payload: EvaluateRequest, current_user: User = Depends(
         section_name = 'DESIGN_PLAN'
         section_text = (payload.plan or '').strip()
         guidance = (
-            "Evaluate ONLY the Design Plan for algorithm design clarity, correctness reasoning, and feasibility. "
-            "Ignore code and tests. Be LENIENT about minor pseudocode or formatting issues; if the design is correct in intent and minor issues are easily fixable, mark is_correct=true."
+            "Evaluate ONLY the Design Plan. The plan must clearly include ALL of the following: "
+            "(1) chosen algorithm (Insertion/Bubble/Selection) with a brief justification tailored to this scenario; "
+            "(2) time complexity for the chosen algorithm specifically on reverse-sorted input; "
+            "(3) the key steps/phases of the algorithm; "
+            "(4) edge cases/special considerations to handle. "
+            "If ANY of these four items is missing or only vaguely implied (e.g., only naming the algorithm without justification, or omitting reverse-sorted complexity, or not listing steps, or not mentioning edge cases), set is_correct=false and briefly list what is missing in reason. "
+            "Minor formatting issues are acceptable, but completeness across the four required elements is mandatory."
         )
     elif payload.part == 'B':
         section_name = 'CODE'
