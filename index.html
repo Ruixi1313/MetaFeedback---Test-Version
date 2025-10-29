@@ -892,12 +892,12 @@
           const err = await res.json();
           throw new Error(err.detail || 'Signup failed');
         }
-        const data = await res.json();
-        token = data.access_token; username = data.username; isAdmin = data.is_admin;
-        localStorage.setItem('token', token);
-        localStorage.setItem('username', username);
-        localStorage.setItem('isAdmin', isAdmin);
-        showDashboard();
+        // On successful signup, return to login screen (do NOT auto-login)
+        $('signup-form').classList.add('hidden');
+        $('login-form').classList.remove('hidden');
+        $('auth-error').classList.add('hidden');
+        // Optional: notify user
+        alert('✅ Account created. Please sign in.');
       } catch (e) {
         $('auth-error').textContent = e.message;
         $('auth-error').classList.remove('hidden');
