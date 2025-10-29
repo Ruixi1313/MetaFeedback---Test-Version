@@ -170,7 +170,7 @@
             <div class="text-sm text-slate-600 mt-1">Selected: <span id="conf-value" class="font-semibold">50</span>%</div>
           </div>
           <div class="mt-6 flex justify-end gap-2">
-            <button id="conf-cancel" class="px-4 py-2 rounded-xl border hover:bg-slate-50">Cancel</button>
+            <button id="conf-cancel" class="hidden px-4 py-2 rounded-xl border hover:bg-slate-50" aria-hidden="true" tabindex="-1">Cancel</button>
             <button id="conf-submit" class="px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">Submit</button>
           </div>
         </div>
@@ -644,6 +644,28 @@
       return `mf_timer_${u}_${a}_${d}_step_${step}`;
     }
 
+    // Persist current step so refresh stays on the same section
+    function getCurrentStepStorageKey() {
+      const a = (currentContext.assignment || '').replace(/\s+/g, '_');
+      const d = (currentContext.domain || '').replace(/\s+/g, '_');
+      const u = (username || 'user');
+      return `mf_current_step_${u}_${a}_${d}`;
+    }
+    function persistCurrentStep() {
+      try { localStorage.setItem(getCurrentStepStorageKey(), String(currentStep)); } catch(_) {}
+    }
+    function restoreCurrentStepFromStorage() {
+      try {
+        const raw = localStorage.getItem(getCurrentStepStorageKey());
+        const val = parseInt(raw || '', 10);
+        if (val === 1 || val === 2 || val === 3) {
+          if (canProceedToStep(val)) {
+            currentStep = val;
+          }
+        }
+      } catch(_) {}
+    }
+
     function loadAllTimersFromStorage() {
       [1,2,3].forEach(s => {
         const key = getTimerStorageKey(s);
@@ -808,6 +830,10 @@
         // Ensure display shows remaining time without starting countdown yet
         updateTimerDisplay(currentStep);
       }
+      // Start or resume per-step 4-minute feedback cooldown for the active step
+      setupFeedbackCooldownIfNeeded(currentStep);
+      // Persist current step so refresh returns here
+      persistCurrentStep();
 
     }
 
@@ -938,6 +964,8 @@
         if (!timersEnabled) {
           $('start-timer-modal').classList.remove('hidden');
         }
+        // Restore the user's last-opened step if allowed
+        restoreCurrentStepFromStorage();
         updateStepDisplay();
         enableStepClicks();
         // Restore last feedback (if any) for this user/assignment/domain
@@ -1190,17 +1218,24 @@
       } catch (e) { console.error('feedback-status', e); }
     }
 
-    function getFeedbackCooldownKeys() {
+    function getFeedbackCooldownKeys(step = currentStep) {
       const u = (username || 'user');
       const a = (currentContext.assignment || '').replace(/\s+/g, '_');
       const d = (currentContext.domain || '').replace(/\s+/g, '_');
-      return { endKey: `mf_fb_cooldown_end_${u}_${a}_${d}`, doneKey: `mf_fb_cooldown_done_${u}_${a}_${d}` };
+      return { endKey: `mf_fb_cooldown_end_${u}_${a}_${d}_step_${step}`, doneKey: `mf_fb_cooldown_done_${u}_${a}_${d}_step_${step}` };
     }
 
-    function setupFeedbackCooldownIfNeeded() {
+    function setupFeedbackCooldownIfNeeded(step = currentStep) {
       const readyLabel = $('feedback-ready');
       if (!readyLabel) return;
-      const { endKey, doneKey } = getFeedbackCooldownKeys();
+      // Reset interval/endTime when switching to a different step
+      if (feedbackCooldown.currentStep !== step) {
+        if (feedbackCooldown.intervalId) clearInterval(feedbackCooldown.intervalId);
+        feedbackCooldown.intervalId = null;
+        feedbackCooldown.endTime = 0;
+        feedbackCooldown.currentStep = step;
+      }
+      const { endKey, doneKey } = getFeedbackCooldownKeys(step);
       // If cooldown already completed earlier in this session/device, do not restart
       if (localStorage.getItem(doneKey) === '1') {
         readyLabel.classList.add('hidden');
@@ -2035,10 +2070,7 @@ function renderSuggestionsForPart(data, part) {
     $('conf-slider').addEventListener('input', () => {
       $('conf-value').textContent = $('conf-slider').value;
     });
-    $('conf-cancel').addEventListener('click', hideConfidenceModal);
-    $('confidence-modal').addEventListener('click', (e) => {
-      if (e.target === $('confidence-modal')) hideConfidenceModal();
-    });
+    // Confidence modal must be completed; disabling cancel and outside-click close
     async function submitConfidenceLevel() {
       const lvl = parseInt($('conf-slider').value, 10);
       try {

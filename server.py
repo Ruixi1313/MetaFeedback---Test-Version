@@ -1021,16 +1021,13 @@ def evaluate_correctness(payload: EvaluateRequest, current_user: User = Depends(
             temperature=0.0,
             response_format={"type": "json_object"},
         )
-        import json, re
+        import json
         content = resp.choices[0].message.content
         try:
             data = json.loads(content)
         except Exception:
-            # Fallback: try to detect boolean in free-form text
-            low = (content or "").lower()
-            is_correct = '"is_correct":true' in low or 'is_correct": true' in low or re.search(r'\btrue\b', low) is not None
-            reason = content[:200] if content else "Evaluation complete."
-            return EvaluateResponse(is_correct=bool(is_correct), reason=reason)
+            # Strict mode: if JSON is malformed, treat as not correct to avoid random flips
+            return EvaluateResponse(is_correct=False, reason="Evaluator returned invalid JSON response.")
         is_correct = bool(data.get("is_correct", False))
         reason = str(data.get("reason", "Evaluation complete."))
         return EvaluateResponse(is_correct=is_correct, reason=reason)
