@@ -587,6 +587,12 @@
     let feedbackEligibility = { enabled: false, remaining: 0 };
     let feedbackCooldown = { active: false, endTime: 0, intervalId: null };
     let timersEnabled = false;
+    function getTimerConsentKey() {
+      const u = (username || 'user');
+      const a = (currentContext.assignment || '').replace(/\s+/g, '_');
+      const d = (currentContext.domain || '').replace(/\s+/g, '_');
+      return `mf_timer_consent_${u}_${a}_${d}`;
+    }
 
     // Timer persistence helpers (per user + assignment + domain + step)
     function getTimerStorageKey(step) {
@@ -851,6 +857,7 @@
 
     function logout() {
       localStorage.clear();
+      try { sessionStorage.clear(); } catch(_) {}
       token = null; username = null; isAdmin = false;
       $('auth-page').classList.remove('hidden');
       $('user-page').classList.add('hidden');
@@ -877,8 +884,8 @@
         await restoreStepFromServer();
         // Load persisted timers for this assignment/domain
         loadAllTimersFromStorage();
-        // Determine if timers were already consented in this session
-        timersEnabled = sessionStorage.getItem('mf_timer_consent') === '1';
+        // Determine if timers were already consented in this session (per user+assignment+domain)
+        timersEnabled = sessionStorage.getItem(getTimerConsentKey()) === '1';
         if (!timersEnabled) {
           $('start-timer-modal').classList.remove('hidden');
         }
@@ -2001,7 +2008,7 @@ function renderSuggestionsOnly(data) {
     // Start timer consent
     $('start-timer-ok').addEventListener('click', () => {
       timersEnabled = true;
-      try { sessionStorage.setItem('mf_timer_consent', '1'); } catch(_) {}
+      try { sessionStorage.setItem(getTimerConsentKey(), '1'); } catch(_) {}
       $('start-timer-modal').classList.add('hidden');
       // Now that consent is given, start the timer for current step
       startStepTimer(currentStep);
