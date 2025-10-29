@@ -520,23 +520,9 @@
         if (data.code != null)  $('code').value = data.code;
         if (data.tests != null) $('tests').value = data.tests;
 
-        if (data.feedback_md && data.feedback_md.trim().length > 0) {
-          const legacyMarkers = ["**Score explanation**", "**Findings**", "**Gaps**", "**Summary**"];
-          const isLegacy = legacyMarkers.some(m => data.feedback_md.includes(m));
-          if (isLegacy) {
-            // Hide any legacy feedback block if present
-            const rb = $('restored-block'); if (rb) rb.classList.add('hidden');
-            const rm = $('restored-md'); if (rm) rm.textContent = '';
-        } else {
-          $('output')?.classList.remove('hidden');
-          $('restored-block')?.classList.remove('hidden');
-          $('restored-md') && ( $('restored-md').textContent = data.feedback_md );
-          $('last-md') && ( $('last-md').textContent = '' ); 
-        }
-        } else {
-          $('restored-block')?.classList.add('hidden');
-          $('restored-md') && ( $('restored-md').textContent = '' );
-        }
+        // Do not auto-show restored feedback markdown; visibility is step-aware via localStorage only
+        const rb = $('restored-block'); if (rb) rb.classList.add('hidden');
+        const rm = $('restored-md'); if (rm) rm.textContent = '';
       } catch (e) {
         console.warn('loadDraft failed', e);
       }
@@ -625,15 +611,8 @@
       return `mf_last_feedback_${u}_${a}_${d}`;
     }
     function restoreLastFeedbackIfAny() {
-      try {
-        const key = getFeedbackStorageKey();
-        const raw = localStorage.getItem(key);
-        if (!raw) return;
-        const obj = JSON.parse(raw);
-        if (!obj || !obj.data || !obj.part) return;
-        renderSuggestionsForPart(obj.data, obj.part);
-        $('output').classList.remove('hidden');
-      } catch(_) {}
+      // Only show feedback for the active section
+      try { syncFeedbackForCurrentStep(); } catch(_) {}
     }
 
     // Timer persistence helpers (per user + assignment + domain + step)
@@ -642,6 +621,29 @@
       const d = (currentContext.domain || '').replace(/\s+/g, '_');
       const u = (username || 'user');
       return `mf_timer_${u}_${a}_${d}_step_${step}`;
+    }
+
+    // Step-aware feedback visibility helpers
+    function getCurrentPartLetter() {
+      return currentStep === 1 ? 'A' : (currentStep === 2 ? 'B' : 'C');
+    }
+    function syncFeedbackForCurrentStep() {
+      try {
+        const key = getFeedbackStorageKey();
+        const raw = localStorage.getItem(key);
+        if (!raw) { $('output').classList.add('hidden'); return; }
+        const obj = JSON.parse(raw);
+        if (!obj || !obj.data || !obj.part) { $('output').classList.add('hidden'); return; }
+        const curr = getCurrentPartLetter();
+        if (obj.part === curr) {
+          renderSuggestionsForPart(obj.data, obj.part);
+          $('output').classList.remove('hidden');
+        } else {
+          $('output').classList.add('hidden');
+        }
+      } catch(_) {
+        $('output').classList.add('hidden');
+      }
     }
 
     // Persist current step so refresh stays on the same section
@@ -834,6 +836,8 @@
       setupFeedbackCooldownIfNeeded(currentStep);
       // Persist current step so refresh returns here
       persistCurrentStep();
+      // Sync step-aware feedback visibility
+      syncFeedbackForCurrentStep();
 
     }
 
