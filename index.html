@@ -159,6 +159,22 @@
           </div>
         </div>
       </div>
+
+      <!-- Confidence Prompt Modal -->
+      <div id="confidence-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-soft p-6 w-full max-w-md">
+          <h3 class="text-2xl font-bold mb-2">Report Your Confidence</h3>
+          <p class="text-slate-700">Confidence Level is how certain you feel about the correctness and completeness of your solution.</p>
+          <div class="mt-4">
+            <input id="conf-slider" type="range" min="0" max="100" value="50" class="w-full">
+            <div class="text-sm text-slate-600 mt-1">Selected: <span id="conf-value" class="font-semibold">50</span>%</div>
+          </div>
+          <div class="mt-6 flex justify-end gap-2">
+            <button id="conf-cancel" class="px-4 py-2 rounded-xl border hover:bg-slate-50">Cancel</button>
+            <button id="conf-submit" class="px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">Submit</button>
+          </div>
+        </div>
+      </div>
     </main>
 
     <div class="flex items-center gap-3">
@@ -561,8 +577,12 @@
         const key = getTimerStorageKey(s);
         const raw = localStorage.getItem(key);
         const val = parseInt(raw, 10);
-        if (Number.isFinite(val) && val >= 0 && val <= STEP_LIMIT_SECONDS) {
+        if (Number.isFinite(val) && val > 0 && val <= STEP_LIMIT_SECONDS) {
           timeLeft[s] = val;
+        } else {
+          // Initialize to full duration for brand-new users/assignments
+          timeLeft[s] = STEP_LIMIT_SECONDS;
+          try { localStorage.setItem(key, String(timeLeft[s])); } catch(_) {}
         }
         updateTimerDisplay(s);
       });
@@ -607,6 +627,18 @@
       // Stop other timers
       [1,2,3].forEach(s => { if (timers[s]) { clearInterval(timers[s]); timers[s] = null; } });
       // Initialize display
+      // Safeguard: if no persisted value exists for this user/assignment/domain+step, start fresh 10:00
+      try {
+        const key = getTimerStorageKey(step);
+        const raw = localStorage.getItem(key);
+        const val = parseInt(raw || '', 10);
+        if (!Number.isFinite(val) || val <= 0 || val > STEP_LIMIT_SECONDS) {
+          timeLeft[step] = STEP_LIMIT_SECONDS;
+          localStorage.setItem(key, String(timeLeft[step]));
+        } else {
+          timeLeft[step] = val; // resume persisted
+        }
+      } catch(_) {}
       updateTimerDisplay(step);
       // Start countdown for this step
       timers[step] = setInterval(() => {
@@ -880,6 +912,7 @@
         markSubmitted(1);
         alert('✅ Part A submitted successfully! You can now proceed to Part B.');
         moveToNextStep();
+        showConfidenceModal();
         
         // Log the submission
         logEvent('submit_part_a', currentContext.assignment, currentContext.domain);
@@ -919,6 +952,7 @@
         markSubmitted(2);
         alert('✅ Part B submitted successfully! You can now proceed to Part C.');
         moveToNextStep();
+        showConfidenceModal();
         
         // Log the submission
         logEvent('submit_part_b', currentContext.assignment, currentContext.domain);
@@ -960,6 +994,7 @@
         
         // Show generate feedback button
         $('btn-generate').classList.remove('hidden');
+        showConfidenceModal();
         $('btn-survey').classList.remove('hidden');
         
         // Log the submission
@@ -1824,6 +1859,43 @@ function renderSuggestionsOnly(data) {
     $('ok-timeout').addEventListener('click', () => {
       $('timeout-modal').classList.add('hidden');
     });
+
+    // Confidence modal interactions
+    function showConfidenceModal() {
+      $('confidence-modal').classList.remove('hidden');
+      // default 50%
+      $('conf-slider').value = '50';
+      $('conf-value').textContent = '50';
+    }
+    function hideConfidenceModal() {
+      $('confidence-modal').classList.add('hidden');
+    }
+    $('conf-slider').addEventListener('input', () => {
+      $('conf-value').textContent = $('conf-slider').value;
+    });
+    $('conf-cancel').addEventListener('click', hideConfidenceModal);
+    $('confidence-modal').addEventListener('click', (e) => {
+      if (e.target === $('confidence-modal')) hideConfidenceModal();
+    });
+    async function submitConfidenceLevel() {
+      const lvl = parseInt($('conf-slider').value, 10);
+      try {
+        const res = await fetch(`${API_URL}/submission/confidence`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ assignment: currentContext.assignment, domain: currentContext.domain, confidence_level: lvl })
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.detail || 'Failed to submit confidence');
+        }
+        hideConfidenceModal();
+        alert('✅ Confidence saved');
+      } catch (e) {
+        alert('❌ ' + (e.message || e));
+      }
+    }
+    $('conf-submit').addEventListener('click', submitConfidenceLevel);
 
 
     // Enter shortcuts
