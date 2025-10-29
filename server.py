@@ -37,22 +37,22 @@ DATABASE_URL = "sqlite:///./meta_feedback.db"
 PST = pytz.timezone('America/Los_Angeles')
 
 def get_pst_now():
-    """Get current time in PST timezone"""
-    return datetime.now(PST)
+    """Get current time in PST timezone (stored as naive local PST)."""
+    return datetime.now(PST).replace(tzinfo=None)
 
 def get_utc_now():
     """Get current time in UTC (standard for database storage)"""
     return datetime.utcnow()
 
 def to_pst_string(dt):
-    """Convert datetime to PST timezone string"""
+    """Format datetime as PST string. If naive, assume it's already PST.
+    If timezone-aware, convert to PST before formatting.
+    """
     if dt is None:
         return ""
-    # Convert UTC to PST
-    utc = pytz.UTC
-    pst = pytz.timezone('US/Pacific')
-    utc_dt = utc.localize(dt) if dt.tzinfo is None else dt
-    pst_dt = utc_dt.astimezone(pst)
+    if dt.tzinfo is None:
+        return dt.strftime('%m/%d/%Y, %H:%M:%S')
+    pst_dt = dt.astimezone(PST)
     return pst_dt.strftime('%m/%d/%Y, %H:%M:%S')
 
 client = None  # Will be initialized when needed
@@ -71,7 +71,7 @@ class User(Base):
     is_admin = Column(Boolean, default=False)
     feedback_enabled = Column(Boolean, default=False)
     feedback_count = Column(Integer, default=0)  # Track number of feedbacks received
-    created_at = Column(DateTime, default=get_utc_now)
+    created_at = Column(DateTime, default=get_pst_now)
 
 class ConfidenceIn(BaseModel):
     assignment: str
@@ -89,7 +89,7 @@ class Submission(Base):
     code = Column(Text, nullable=True)
     tests = Column(Text, nullable=True)
     confidence_level = Column(Integer, nullable=True)  # 0-100 percentage
-    timestamp = Column(DateTime, default=get_utc_now)
+    timestamp = Column(DateTime, default=get_pst_now)
 
 class Draft(Base):
     __tablename__ = "drafts"
@@ -101,7 +101,7 @@ class Draft(Base):
     code = Column(Text, nullable=True)
     tests = Column(Text, nullable=True)
     feedback_md = Column(Text, nullable=True)
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=get_utc_now)
+    updated_at = Column(DateTime, default=get_pst_now, onupdate=get_pst_now)
     __table_args__ = ({"sqlite_autoincrement": True},)
 
 class Feedback(Base):
@@ -111,7 +111,7 @@ class Feedback(Base):
     content_md = Column(Text)
     source = Column(String(32), default="instant")  
     assignment_id = Column(String(128), nullable=True)
-    created_at = Column(DateTime, server_default=func.now())
+    created_at = Column(DateTime, default=get_pst_now)
 
 class DraftHistory(Base):
     __tablename__ = "draft_history"
@@ -124,7 +124,7 @@ class DraftHistory(Base):
     tests = Column(Text, nullable=True)
     feedback_md = Column(Text, nullable=True)
     version_tag = Column(String(32), nullable=True) 
-    created_at = Column(DateTime, server_default=func.now())
+    created_at = Column(DateTime, default=get_pst_now)
 
 class EventLog(Base):
     __tablename__ = "event_log"
@@ -134,7 +134,7 @@ class EventLog(Base):
     assignment = Column(String, nullable=True)
     domain = Column(String, nullable=True)
     details = Column(Text, nullable=True) 
-    created_at = Column(DateTime, server_default=func.now())
+    created_at = Column(DateTime, default=get_pst_now)
 
 class Question(Base):
     __tablename__ = "questions"
@@ -143,8 +143,8 @@ class Question(Base):
     domain = Column(String, nullable=False, index=True)
     question_text = Column(Text, nullable=False)
     rubric = Column(Text, nullable=True)
-    created_at = Column(DateTime, server_default=func.now())
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    created_at = Column(DateTime, default=get_pst_now)
+    updated_at = Column(DateTime, default=get_pst_now, onupdate=get_pst_now)
 
 Base.metadata.create_all(bind=engine)
 
@@ -726,7 +726,7 @@ def submit_assignment(
         code=submission.code,
         tests=submission.tests,
         confidence_level=submission.confidence_level,
-        timestamp=get_utc_now()
+        timestamp=get_pst_now()
     )
     db.add(new_s); db.commit(); db.refresh(new_s)
     return SubmissionResponse(
@@ -786,7 +786,7 @@ def submit_part(
         code=new_code,
         tests=new_tests,
         confidence_level=None,
-        timestamp=get_utc_now()
+        timestamp=get_pst_now()
     )
     db.add(new_s)
     db.commit()
