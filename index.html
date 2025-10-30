@@ -675,6 +675,31 @@
       }
     }
 
+    // Enable/disable controls for the active step if it is already completed
+    function updateControlsForCompletionCurrentStep() {
+      const part = getCurrentPartLetter();
+      const isCompleted = !!passedParts[part];
+      // Submit button per part
+      const submitBtn = part === 'A' ? $('submit-part-a') : part === 'B' ? $('submit-part-b') : $('submit-part-c');
+      if (submitBtn) {
+        submitBtn.disabled = isCompleted;
+      }
+      // Meta-feedback button behavior
+      const genBtn = $('btn-generate');
+      const readyLabel = $('feedback-ready');
+      if (genBtn) {
+        if (isCompleted) {
+          genBtn.disabled = true;
+          genBtn.classList.remove('bg-emerald-600');
+          genBtn.classList.add('bg-slate-300','text-white','cursor-not-allowed');
+          if (readyLabel) readyLabel.classList.add('hidden');
+        } else {
+          // Re-evaluate eligibility styling
+          try { checkFeedbackStatus(); } catch(_) {}
+        }
+      }
+    }
+
     // Persist current step so refresh stays on the same section
     function getCurrentStepStorageKey() {
       const a = (currentContext.assignment || '').replace(/\s+/g, '_');
@@ -870,6 +895,8 @@
       persistCurrentStep();
       // Sync step-aware feedback visibility
       syncFeedbackForCurrentStep();
+      // Update controls enable/disable based on completion for the active step
+      updateControlsForCompletionCurrentStep();
 
     }
 
@@ -2171,6 +2198,7 @@ function renderSuggestionsForPart(data, part) {
             if (lastSubmittedStep === 1) highestStepUnlocked = Math.max(highestStepUnlocked, 2);
             if (lastSubmittedStep === 2) highestStepUnlocked = Math.max(highestStepUnlocked, 3);
             moveToNextStep();
+            updateControlsForCompletionCurrentStep();
             // If all sections are correct and this was Part C with confidence > 40, prompt survey
             if (lastSubmittedStep === 3 && passedParts.A && passedParts.B && passedParts.C) {
               const btn = $('btn-survey');
