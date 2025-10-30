@@ -698,27 +698,35 @@
       }
     }
 
-    // Enable/disable controls for the active step if it is already completed
-    function updateControlsForCompletionCurrentStep() {
-      const part = getCurrentPartLetter();
-      const isCompleted = !!passedParts[part];
-      // Submit button per part
-      const submitBtn = part === 'A' ? $('submit-part-a') : part === 'B' ? $('submit-part-b') : $('submit-part-c');
-      if (submitBtn) {
-        submitBtn.disabled = isCompleted;
-      }
-      // Meta-feedback button behavior
+    // Enable/disable controls for all steps based on current step and completion
+    function updateControlsForAllSteps() {
+      // Submit buttons
+      const disableA = currentStep !== 1 || !!passedParts.A;
+      const disableB = currentStep !== 2 || !!passedParts.B;
+      const disableC = currentStep !== 3 || !!passedParts.C;
+      const btnA = $('submit-part-a'); if (btnA) btnA.disabled = disableA;
+      const btnB = $('submit-part-b'); if (btnB) btnB.disabled = disableB;
+      const btnC = $('submit-part-c'); if (btnC) btnC.disabled = disableC;
+
+      // Meta-feedback button available only for the current step and if not completed
       const genBtn = $('btn-generate');
       const readyLabel = $('feedback-ready');
       if (genBtn) {
-        if (isCompleted) {
-          genBtn.disabled = true;
-          genBtn.classList.remove('bg-emerald-600');
-          genBtn.classList.add('bg-slate-300','text-white','cursor-not-allowed');
-          if (readyLabel) readyLabel.classList.add('hidden');
-        } else {
-          // Re-evaluate eligibility styling
-          try { checkFeedbackStatus(); } catch(_) {}
+        const curr = getCurrentPartLetter();
+        const isCompleted = !!passedParts[curr];
+        const enable = !isCompleted; // Only enable on current step since button acts on current step
+        if (currentStep === 1 || currentStep === 2 || currentStep === 3) {
+          if (enable) {
+            genBtn.disabled = false;
+            genBtn.classList.remove('bg-slate-300','text-white','cursor-not-allowed');
+            genBtn.classList.add('bg-emerald-600');
+            try { checkFeedbackStatus(); } catch(_) {}
+          } else {
+            genBtn.disabled = true;
+            genBtn.classList.remove('bg-emerald-600');
+            genBtn.classList.add('bg-slate-300','text-white','cursor-not-allowed');
+            if (readyLabel) readyLabel.classList.add('hidden');
+          }
         }
       }
     }
@@ -855,22 +863,35 @@
     }
 
     // Extension and auto-submit flow
-    let extensionUsed = { 1: false, 2: false, 3: false };
+    let extensionOffered = { 1: false, 2: false, 3: false }; // modal offered at most once per part
+    let extensionUsed = { 1: false, 2: false, 3: false };    // user accepted 3-minute extension
+    function getExtensionKey(step) {
+      const a = (currentContext.assignment || '').replace(/\s+/g, '_');
+      const d = (currentContext.domain || '').replace(/\s+/g, '_');
+      const u = (username || 'user');
+      return `mf_ext_offered_${u}_${a}_${d}_step_${step}`;
+    }
     function handleTimeUpForStep(step) {
-      // If already extended once, auto-submit and proceed
-      if (extensionUsed[step]) {
+      // If we have already offered extension before (memory or storage), auto-submit and proceed (no second offer)
+      try { if (localStorage.getItem(getExtensionKey(step)) === '1') extensionOffered[step] = true; } catch(_) {}
+      if (extensionOffered[step]) {
         autoSubmitAndProceed(step);
         return;
       }
-      // Offer one-time 3-minute extension
+      // Offer one-time 3-minute extension and mark as offered immediately (persist)
+      extensionOffered[step] = true;
+      try { localStorage.setItem(getExtensionKey(step), '1'); } catch(_) {}
       const m = $('extend-modal'); if (m) m.classList.remove('hidden');
       // Wire buttons (one-off handlers)
       const yesBtn = $('extend-yes');
       const noBtn = $('extend-no');
       const cleanup = () => { if (m) m.classList.add('hidden'); };
       const onYes = () => {
-        extensionUsed[step] = true;
-        timeLeft[step] = (timeLeft[step] || 0) + 3 * 60; // add 3 minutes
+        // Guard: do not add time more than once
+        if (!extensionUsed[step]) {
+          extensionUsed[step] = true;
+          timeLeft[step] = (timeLeft[step] || 0) + 3 * 60; // add 3 minutes
+        }
         updateTimerDisplay(step);
         cleanup();
         startStepTimer(step);
@@ -983,8 +1004,8 @@
       persistCurrentStep();
       // Sync step-aware feedback visibility
       syncFeedbackForCurrentStep();
-      // Update controls enable/disable based on completion for the active step
-      updateControlsForCompletionCurrentStep();
+      // Update controls enable/disable for all steps based on current step and completion
+      updateControlsForAllSteps();
 
     }
 
@@ -1082,7 +1103,12 @@
     }
 
     function logout() {
-      localStorage.clear();
+      // Preserve per-user state (timers, steps, cooldowns). Remove only auth keys.
+      try {
+        localStorage.removeItem('token');
+        localStorage.removeItem('username');
+        localStorage.removeItem('isAdmin');
+      } catch(_) {}
       try { sessionStorage.clear(); } catch(_) {}
       token = null; username = null; isAdmin = false;
       $('auth-page').classList.remove('hidden');
@@ -1112,8 +1138,8 @@
         restorePassedPartsFromStorage();
         // Load persisted timers for this assignment/domain
         loadAllTimersFromStorage();
-        // Determine if timers were already consented in this session (per user+assignment+domain)
-        timersEnabled = sessionStorage.getItem(getTimerConsentKey()) === '1';
+        // Determine if timers were already consented (persisted per user+assignment+domain)
+        timersEnabled = localStorage.getItem(getTimerConsentKey()) === '1';
         if (!timersEnabled) {
           $('start-timer-modal').classList.remove('hidden');
         }
@@ -1430,7 +1456,7 @@
           const sec = Math.ceil(ms / 1000);
           const m = Math.floor(sec / 60).toString().padStart(2,'0');
           const s = (sec % 60).toString().padStart(2,'0');
-          readyLabel.textContent = `Generate AI Feedback is ready to show in ${m}:${s}`;
+          readyLabel.textContent = `Generate AI Feedback will be enabled in ${m}:${s}`;
           readyLabel.classList.remove('hidden');
           // Force disabled style during cooldown
           $('btn-generate').classList.remove('bg-emerald-600');
@@ -2311,7 +2337,7 @@ function renderSuggestionsForPart(data, part) {
             if (lastSubmittedStep === 1) highestStepUnlocked = Math.max(highestStepUnlocked, 2);
             if (lastSubmittedStep === 2) highestStepUnlocked = Math.max(highestStepUnlocked, 3);
             moveToNextStep();
-            updateControlsForCompletionCurrentStep();
+            updateControlsForAllSteps();
             // If all sections are correct and this was Part C with confidence > 40, prompt survey
             if (lastSubmittedStep === 3 && passedParts.A && passedParts.B && passedParts.C) {
               const btn = $('btn-survey');
@@ -2346,7 +2372,7 @@ function renderSuggestionsForPart(data, part) {
     // Start timer consent
     $('start-timer-ok').addEventListener('click', () => {
       timersEnabled = true;
-      try { sessionStorage.setItem(getTimerConsentKey(), '1'); } catch(_) {}
+      try { localStorage.setItem(getTimerConsentKey(), '1'); } catch(_) {}
       $('start-timer-modal').classList.add('hidden');
       // Now that consent is given, start the timer for current step
       startStepTimer(currentStep);
