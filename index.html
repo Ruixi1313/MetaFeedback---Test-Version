@@ -229,6 +229,18 @@
       </div>
     </div>
 
+    <!-- Extend Time Modal -->
+    <div id="extend-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-soft p-6 w-full max-w-md">
+        <h3 class="text-2xl font-bold mb-2">Time's Up</h3>
+        <p class="text-slate-700">Do you need 3 more minutes for this section? If you choose No, your current answer will be submitted and the next section will open.</p>
+        <div class="mt-6 flex justify-end gap-2">
+          <button id="extend-no" class="px-4 py-2 rounded-xl border hover:bg-slate-50">No</button>
+          <button id="extend-yes" class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">Yes, add 3 minutes</button>
+        </div>
+      </div>
+    </div>
+
     
     </div>
 
@@ -813,23 +825,8 @@
         } else {
           clearInterval(timers[step]);
           timers[step] = null;
-          // Time’s up: show popups only if user never submitted this step
-          if (!hasSubmittedStep(step)) {
-            const textEl = $('timeout-text');
-            const msgGenerated = 'You didn’t finish the current section within 10 minutes. Meta-Feedback has been automatically generated — please review the feedback and submit your answer.';
-            const msgNoFeedback = 'Time is up — please proceed to the next section as soon as possible.';
-            if (feedbackEligibility.enabled && feedbackEligibility.remaining > 0) {
-              if (textEl) textEl.textContent = msgGenerated;
-              generateFeedback().finally(() => {
-                const m = $('timeout-modal');
-                if (m) m.classList.remove('hidden');
-              });
-            } else {
-              if (textEl) textEl.textContent = msgNoFeedback;
-              const m = $('timeout-modal');
-              if (m) m.classList.remove('hidden');
-            }
-          }
+          // Time’s up → handle extension or auto-submit
+          handleTimeUpForStep(step);
         }
       }, 1000);
     }
@@ -855,6 +852,59 @@
         if (timersEnabled) startStepTimer(step);
         timerResumeTimeouts[step] = null;
       }, Math.max(0, ms | 0));
+    }
+
+    // Extension and auto-submit flow
+    let extensionUsed = { 1: false, 2: false, 3: false };
+    function handleTimeUpForStep(step) {
+      // If already extended once, auto-submit and proceed
+      if (extensionUsed[step]) {
+        autoSubmitAndProceed(step);
+        return;
+      }
+      // Offer one-time 3-minute extension
+      const m = $('extend-modal'); if (m) m.classList.remove('hidden');
+      // Wire buttons (one-off handlers)
+      const yesBtn = $('extend-yes');
+      const noBtn = $('extend-no');
+      const cleanup = () => { if (m) m.classList.add('hidden'); };
+      const onYes = () => {
+        extensionUsed[step] = true;
+        timeLeft[step] = (timeLeft[step] || 0) + 3 * 60; // add 3 minutes
+        updateTimerDisplay(step);
+        cleanup();
+        startStepTimer(step);
+        yesBtn.removeEventListener('click', onYes);
+        noBtn.removeEventListener('click', onNo);
+      };
+      const onNo = () => {
+        cleanup();
+        autoSubmitAndProceed(step);
+        yesBtn.removeEventListener('click', onYes);
+        noBtn.removeEventListener('click', onNo);
+      };
+      if (yesBtn && noBtn) {
+        yesBtn.addEventListener('click', onYes);
+        noBtn.addEventListener('click', onNo);
+      }
+    }
+
+    async function autoSubmitAndProceed(step) {
+      // Ensure UI is set to this step
+      currentStep = step;
+      updateStepDisplay();
+      try {
+        // After auto-submit, we will proceed on confidence regardless of evaluator
+        forceProceedOnConfidence = true;
+        if (step === 1) {
+          await submitPartA();
+        } else if (step === 2) {
+          await submitPartB();
+        } else {
+          await submitPartC();
+        }
+        // Next step navigation will be controlled by confidence gating
+      } catch (_) {}
     }
 
     // Restore progress and step from server submissions for current assignment/domain
@@ -1090,6 +1140,8 @@
 
     // Student actions
     let pendingSubmission = null;
+    // When true, after confidence entry we proceed regardless of evaluator result (used after auto-submit)
+    let forceProceedOnConfidence = false;
 
     async function checkIfFirstSubmission() {
       try {
@@ -2214,6 +2266,13 @@ function renderSuggestionsForPart(data, part) {
           const err = await res.json().catch(() => ({}));
           throw new Error(err.detail || 'Failed to submit confidence');
         }
+        // Forced proceed path: skip evaluator and feedback; advance regardless of confidence
+        if (forceProceedOnConfidence) {
+          forceProceedOnConfidence = false;
+          hideConfidenceModal();
+          moveToNextStep();
+          return;
+        }
         // 2) Evaluate correctness using GPT
         $('conf-submit').disabled = true;
         const oldTxt = $('conf-submit').textContent;
@@ -2257,7 +2316,7 @@ function renderSuggestionsForPart(data, part) {
               alert('You have correct answer for all sections, Congratulation! Please complete the survey now!');
             }
           } else if (evData.is_correct && lvl <= 40) {
-            alert('Your answer appears correct, but your confidence level is low. Meta-Feedback will be generated automatically — reflect on it and build confidence before proceeding to the next section.');
+            alert('Meta-Feedback will be generated automatically for you, please reflect on it and build confidence before proceeding to the next section.');
             if (feedbackEligibility.enabled && feedbackEligibility.remaining > 0) {
               await generateFeedback();
             }
