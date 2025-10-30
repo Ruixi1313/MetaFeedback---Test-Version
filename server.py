@@ -89,6 +89,13 @@ class Submission(Base):
     code = Column(Text, nullable=True)
     tests = Column(Text, nullable=True)
     confidence_level = Column(Integer, nullable=True)  # 0-100 percentage
+    # Per-part evaluator results
+    a_correct = Column(Boolean, nullable=True)
+    b_correct = Column(Boolean, nullable=True)
+    c_correct = Column(Boolean, nullable=True)
+    a_reason = Column(Text, nullable=True)
+    b_reason = Column(Text, nullable=True)
+    c_reason = Column(Text, nullable=True)
     timestamp = Column(DateTime, default=get_pst_now)
 
 class Draft(Base):
@@ -277,6 +284,25 @@ async def startup_event():
                     if "confidence_level" not in col_names:
                         conn.execute(text("ALTER TABLE submissions ADD COLUMN confidence_level INTEGER;"))
                         print("Added 'confidence_level' column to submissions")
+                    # Add per-part evaluator columns if missing
+                    if "a_correct" not in col_names:
+                        conn.execute(text("ALTER TABLE submissions ADD COLUMN a_correct BOOLEAN;"))
+                        print("Added 'a_correct' column to submissions")
+                    if "b_correct" not in col_names:
+                        conn.execute(text("ALTER TABLE submissions ADD COLUMN b_correct BOOLEAN;"))
+                        print("Added 'b_correct' column to submissions")
+                    if "c_correct" not in col_names:
+                        conn.execute(text("ALTER TABLE submissions ADD COLUMN c_correct BOOLEAN;"))
+                        print("Added 'c_correct' column to submissions")
+                    if "a_reason" not in col_names:
+                        conn.execute(text("ALTER TABLE submissions ADD COLUMN a_reason TEXT;"))
+                        print("Added 'a_reason' column to submissions")
+                    if "b_reason" not in col_names:
+                        conn.execute(text("ALTER TABLE submissions ADD COLUMN b_reason TEXT;"))
+                        print("Added 'b_reason' column to submissions")
+                    if "c_reason" not in col_names:
+                        conn.execute(text("ALTER TABLE submissions ADD COLUMN c_reason TEXT;"))
+                        print("Added 'c_reason' column to submissions")
             except Exception as e:
                 print("Could not alter table for confidence_level:", e)
 
@@ -1030,6 +1056,30 @@ def evaluate_correctness(payload: EvaluateRequest, current_user: User = Depends(
             return EvaluateResponse(is_correct=False, reason="Evaluator returned invalid JSON response.")
         is_correct = bool(data.get("is_correct", False))
         reason = str(data.get("reason", "Evaluation complete."))
+
+        # Persist per-part result on the latest submission for this user/assignment/domain
+        try:
+            latest = (db.query(Submission)
+                      .filter(Submission.username == current_user.username,
+                              Submission.assignment == payload.assignment,
+                              Submission.domain == payload.domain)
+                      .order_by(Submission.timestamp.desc())
+                      .first())
+            if latest:
+                if payload.part == 'A':
+                    latest.a_correct = is_correct
+                    latest.a_reason = reason
+                elif payload.part == 'B':
+                    latest.b_correct = is_correct
+                    latest.b_reason = reason
+                else:
+                    latest.c_correct = is_correct
+                    latest.c_reason = reason
+                db.commit()
+        except Exception as _:
+            # Non-fatal: continue returning the response
+            db.rollback()
+
         return EvaluateResponse(is_correct=is_correct, reason=reason)
     except Exception as e:
         # Graceful failure: do not 500; return not-correct with reason
