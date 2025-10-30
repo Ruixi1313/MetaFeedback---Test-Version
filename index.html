@@ -311,7 +311,7 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <section class="bg-white rounded-2xl border border-slate-200 shadow-soft p-5">
-        <h2 class="text-xl font-semibold mb-4">Users</h2>
+        <h2 id="users-title" class="text-xl font-semibold mb-4">Users</h2>
         <div id="users-list" class="space-y-2"></div>
       </section>
 
@@ -1612,12 +1612,16 @@ function renderSuggestionsForPart(data, part) {
         const res = await fetch(`${API_URL}/users`, { headers: { 'Authorization': `Bearer ${token}` } });
         const users = await res.json();
         const container = $('users-list'); container.innerHTML = '';
-        users.forEach(user => {
-          if (user.username === 'admin') return;
+        // Exclude admin and sort by created/username if needed (backend returns no created_at, so keep order)
+        const nonAdmin = users.filter(u => u.username !== 'admin');
+        // Update header count
+        const title = $('users-title'); if (title) title.textContent = `Users (${nonAdmin.length})`;
+        nonAdmin.forEach((user, idx) => {
           const el = document.createElement('div');
           el.className = 'flex items-center justify-between p-3 rounded-lg border bg-slate-50';
           el.innerHTML = `
             <div>
+              <span class="mr-2 text-slate-500">${idx + 1}.</span>
               <span class="font-medium">${user.username}</span>
               <span class="ml-2 text-xs px-2 py-1 rounded-full ${user.feedback_enabled ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}">
                 ${user.feedback_enabled ? 'Feedback Enabled' : 'Survey Mode'}

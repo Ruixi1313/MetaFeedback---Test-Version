@@ -1339,9 +1339,28 @@ def set_confidence(
 # Confidence Level Management
 @app.get("/admin/submissions-by-confidence", response_model=List[SubmissionResponse])
 def get_submissions_by_confidence(admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
-    """Get all submissions sorted by confidence level (lowest to highest)"""
-    rows = db.query(Submission).filter(Submission.confidence_level.isnot(None))\
-                               .order_by(Submission.confidence_level.asc()).all()
+    """Get the most recent confidence submission per user, sorted by confidence (low→high)."""
+    # Subquery to get latest timestamp per user where confidence is present
+    latest_per_user = (
+        db.query(
+            Submission.username.label("username"),
+            func.max(Submission.timestamp).label("max_ts")
+        )
+        .filter(Submission.confidence_level.isnot(None))
+        .group_by(Submission.username)
+        .subquery()
+    )
+
+    # Join to get the full submission rows corresponding to each user's latest
+    rows = (
+        db.query(Submission)
+        .join(
+            latest_per_user,
+            (Submission.username == latest_per_user.c.username) & (Submission.timestamp == latest_per_user.c.max_ts)
+        )
+        .order_by(Submission.confidence_level.asc())
+        .all()
+    )
     return [
         SubmissionResponse(
             id=s.id, username=s.username, assignment=s.assignment, domain=s.domain,
