@@ -233,6 +233,17 @@
     </div>
 
   </div>
+
+    <!-- Feedback Pause Modal -->
+    <div id="pause-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-soft p-6 w-full max-w-md">
+        <h3 class="text-2xl font-bold mb-2">Timer Paused</h3>
+        <p class="text-slate-700">You just received AI feedback. The timer for this section is paused for 2 minutes. Please read the feedback and revise your answer. The timer will resume automatically.</p>
+        <div class="mt-6 flex justify-end gap-2">
+          <button id="ok-pause" class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">OK</button>
+        </div>
+      </div>
+    </div>
   
   <!-- Admin -->
   <div id="admin-page" class="hidden p-6 md:p-10 mx-auto max-w-7xl space-y-6">
@@ -792,6 +803,10 @@
       updateTimerDisplay(step);
       // Start countdown for this step
       timers[step] = setInterval(() => {
+        // Honor pause window
+        if (timerPauseUntil[step] && Date.now() < timerPauseUntil[step]) {
+          return; // do not decrement while paused
+        }
         if (timeLeft[step] > 0) {
           timeLeft[step] -= 1;
           updateTimerDisplay(step);
@@ -817,6 +832,29 @@
           }
         }
       }, 1000);
+    }
+
+    // Pause current step timer for a fixed duration (ms) and resume afterwards
+    let timerResumeTimeouts = { 1: null, 2: null, 3: null };
+    let timerPauseUntil = { 1: 0, 2: 0, 3: 0 };
+    function pauseCurrentStepTimerFor(ms) {
+      const step = currentStep;
+      // Stop active countdown if running
+      if (timers[step]) { clearInterval(timers[step]); timers[step] = null; }
+      // Set pause expiry so even stray intervals won't tick
+      timerPauseUntil[step] = Date.now() + Math.max(0, ms | 0);
+      // Clear any pending resume timeout and schedule a new one
+      if (timerResumeTimeouts[step]) { clearTimeout(timerResumeTimeouts[step]); timerResumeTimeouts[step] = null; }
+      // Show pause modal
+      const m = $('pause-modal'); if (m) m.classList.remove('hidden');
+      timerResumeTimeouts[step] = setTimeout(() => {
+        // Hide modal if still open
+        const mm = $('pause-modal'); if (mm) mm.classList.add('hidden');
+        // Only resume if timers are enabled
+        timerPauseUntil[step] = 0; // lift pause
+        if (timersEnabled) startStepTimer(step);
+        timerResumeTimeouts[step] = null;
+      }, Math.max(0, ms | 0));
     }
 
     // Restore progress and step from server submissions for current assignment/domain
@@ -1427,6 +1465,14 @@
     logEvent('view_feedback', payload.assignment, payload.domain);
     await saveDraft();
     await checkFeedbackStatus();
+    // Pause the timer for 2 minutes to allow reading feedback
+    if (timersEnabled) {
+      pauseCurrentStepTimerFor(2 * 60 * 1000);
+    } else {
+      // Show modal info even if timers not started yet
+      const m = $('pause-modal'); if (m) m.classList.remove('hidden');
+      setTimeout(() => { const mm = $('pause-modal'); if (mm) mm.classList.add('hidden'); }, 3000);
+    }
 
   } catch (e) {
     alert('❌ ' + (e.message || e));
@@ -2135,6 +2181,10 @@ function renderSuggestionsForPart(data, part) {
     // Timeout modal
     $('ok-timeout').addEventListener('click', () => {
       $('timeout-modal').classList.add('hidden');
+    });
+    // Pause modal acknowledge
+    $('ok-pause').addEventListener('click', () => {
+      const m = $('pause-modal'); if (m) m.classList.add('hidden');
     });
 
     // Confidence modal interactions
