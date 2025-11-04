@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -9,12 +10,24 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans'; }
-    .shadow-soft { box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-    .hidden { display: none; }
-    pre { white-space: pre-wrap; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, 'Noto Sans';
+    }
+
+    .shadow-soft {
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    pre {
+      white-space: pre-wrap;
+    }
   </style>
 </head>
+
 <body class="min-h-screen bg-gradient-to-b from-white to-slate-50">
   <!-- Auth -->
   <div id="auth-page" class="min-h-screen flex items-center justify-center p-6">
@@ -24,14 +37,22 @@
       <div id="login-form">
         <h2 class="text-xl font-semibold mb-4">Login</h2>
         <div class="space-y-3">
-          <input id="login-username" type="text" placeholder="Username" class="w-full border rounded-xl px-4 py-2" autocomplete="username" autocapitalize="none" spellcheck="false" />
+          <input id="login-username" type="text" placeholder="Username" class="w-full border rounded-xl px-4 py-2"
+            autocomplete="username" autocapitalize="none" spellcheck="false" />
           <div class="relative">
-            <input id="login-password" type="password" placeholder="Password" class="w-full border rounded-xl px-4 py-2 pr-12" autocomplete="current-password" />
-            <button type="button" onclick="togglePassword('login-password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            <input id="login-password" type="password" placeholder="Password"
+              class="w-full border rounded-xl px-4 py-2 pr-12" autocomplete="current-password" />
+            <button type="button" onclick="togglePassword('login-password', this)"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
             </button>
           </div>
-          <button id="btn-login" class="w-full px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">Login</button>
+          <button id="btn-login"
+            class="w-full px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">Login</button>
         </div>
         <p class="text-center mt-4 text-sm text-slate-600">
           Don't have an account? <button id="show-signup" class="text-emerald-600 hover:underline">Sign up</button>
@@ -41,14 +62,22 @@
       <div id="signup-form" class="hidden">
         <h2 class="text-xl font-semibold mb-4">Sign Up</h2>
         <div class="space-y-3">
-          <input id="signup-username" type="text" placeholder="Username" class="w-full border rounded-xl px-4 py-2" autocomplete="username" autocapitalize="none" spellcheck="false" />
+          <input id="signup-username" type="text" placeholder="Username" class="w-full border rounded-xl px-4 py-2"
+            autocomplete="username" autocapitalize="none" spellcheck="false" />
           <div class="relative">
-            <input id="signup-password" type="password" placeholder="Password" class="w-full border rounded-xl px-4 py-2 pr-12" autocomplete="new-password" />
-            <button type="button" onclick="togglePassword('signup-password', this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            <input id="signup-password" type="password" placeholder="Password"
+              class="w-full border rounded-xl px-4 py-2 pr-12" autocomplete="new-password" />
+            <button type="button" onclick="togglePassword('signup-password', this)"
+              class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
             </button>
           </div>
-          <button id="btn-signup" class="w-full px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">Sign Up</button>
+          <button id="btn-signup"
+            class="w-full px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">Sign Up</button>
         </div>
         <p class="text-center mt-4 text-sm text-slate-600">
           Already have an account? <button id="show-login" class="text-emerald-600 hover:underline">Login</button>
@@ -74,17 +103,23 @@
     <div class="mb-8">
       <div class="flex items-center justify-center space-x-4">
         <div class="flex items-center">
-          <div id="step-1-indicator" class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-semibold">1</div>
+          <div id="step-1-indicator"
+            class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-semibold">1
+          </div>
           <span id="step-1-label" class="ml-2 text-sm font-medium text-blue-600">Design Plan</span>
         </div>
         <div class="w-12 h-0.5 bg-slate-300"></div>
         <div class="flex items-center">
-          <div id="step-2-indicator" class="w-8 h-8 rounded-full bg-slate-300 text-slate-500 flex items-center justify-center text-sm font-semibold">2</div>
+          <div id="step-2-indicator"
+            class="w-8 h-8 rounded-full bg-slate-300 text-slate-500 flex items-center justify-center text-sm font-semibold">
+            2</div>
           <span id="step-2-label" class="ml-2 text-sm font-medium text-slate-500">Implementation</span>
         </div>
         <div class="w-12 h-0.5 bg-slate-300"></div>
         <div class="flex items-center">
-          <div id="step-3-indicator" class="w-8 h-8 rounded-full bg-slate-300 text-slate-500 flex items-center justify-center text-sm font-semibold">3</div>
+          <div id="step-3-indicator"
+            class="w-8 h-8 rounded-full bg-slate-300 text-slate-500 flex items-center justify-center text-sm font-semibold">
+            3</div>
           <span id="step-3-label" class="ml-2 text-sm font-medium text-slate-500">Testing</span>
         </div>
       </div>
@@ -100,11 +135,13 @@
             <span id="timer-a" class="text-xs font-medium text-slate-500">10:00</span>
           </div>
         </div>
-        <p class="text-slate-600">Describe your algorithm design, complexity analysis, correctness sketch, assumptions, and test plan.</p>
-        <textarea id="plan" class="min-h-[300px] w-full border rounded-xl p-4 text-sm" 
-                  placeholder="Describe algorithms, complexity, correctness sketch, assumptions, and test plan..."></textarea>
+        <p class="text-slate-600">Describe your algorithm design, complexity analysis, correctness sketch, assumptions,
+          and test plan.</p>
+        <textarea id="plan" class="min-h-[300px] w-full border rounded-xl p-4 text-sm"
+          placeholder="Describe algorithms, complexity, correctness sketch, assumptions, and test plan..."></textarea>
         <div class="flex justify-end">
-          <button id="submit-part-a" class="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed">
+          <button id="submit-part-a"
+            class="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed">
             Submit Part A
           </button>
         </div>
@@ -119,11 +156,13 @@
             <span id="timer-b" class="text-xs font-medium text-slate-500">10:00</span>
           </div>
         </div>
-        <p class="text-slate-600">Implement your solution in Python. Make sure your code matches your design plan from Part A.</p>
-        <textarea id="code" class="min-h-[300px] w-full border rounded-xl p-4 font-mono text-sm" 
-                  placeholder="Write your Python code here..."></textarea>
+        <p class="text-slate-600">Implement your solution in Python. Make sure your code matches your design plan from
+          Part A.</p>
+        <textarea id="code" class="min-h-[300px] w-full border rounded-xl p-4 font-mono text-sm"
+          placeholder="Write your Python code here..."></textarea>
         <div class="flex justify-end">
-          <button id="submit-part-b" class="px-6 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed">
+          <button id="submit-part-b"
+            class="px-6 py-2 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed">
             Submit Part B
           </button>
         </div>
@@ -138,22 +177,25 @@
             <span id="timer-c" class="text-xs font-medium text-slate-500">10:00</span>
           </div>
         </div>
-        <p class="text-slate-600">Write comprehensive tests for your implementation. Include edge cases and test the correctness of your solution.</p>
-        <textarea id="tests" class="min-h-[300px] w-full border rounded-xl p-4 font-mono text-sm" 
-                  placeholder="Write your test cases here..."></textarea>
+        <p class="text-slate-600">Write comprehensive tests for your implementation. Include edge cases and test the
+          correctness of your solution.</p>
+        <textarea id="tests" class="min-h-[300px] w-full border rounded-xl p-4 font-mono text-sm"
+          placeholder="Write your test cases here..."></textarea>
         <div class="flex justify-end">
-          <button id="submit-part-c" class="px-6 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 disabled:bg-slate-300 disabled:cursor-not-allowed">
+          <button id="submit-part-c"
+            class="px-6 py-2 bg-purple-600 text-white rounded-xl hover:bg-purple-700 disabled:bg-slate-300 disabled:cursor-not-allowed">
             Submit Part C
           </button>
         </div>
       </section>
 
-      
+
       <!-- Timeout Modal -->
       <div id="timeout-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
         <div class="bg-white rounded-2xl border border-slate-200 shadow-soft p-6 w-full max-w-md">
           <h3 class="text-2xl font-bold mb-2">Time's Up</h3>
-          <p id="timeout-text" class="text-slate-700">You didn’t finish the current section within 10 minutes. Meta-Feedback has been automatically generated — please review the feedback and submit your answer.</p>
+          <p id="timeout-text" class="text-slate-700">You didn’t finish the current section within 10 minutes.
+            Meta-Feedback has been automatically generated — please review the feedback and submit your answer.</p>
           <div class="mt-6 flex justify-end gap-2">
             <button id="ok-timeout" class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">OK</button>
           </div>
@@ -164,14 +206,18 @@
       <div id="confidence-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
         <div class="bg-white rounded-2xl border border-slate-200 shadow-soft p-6 w-full max-w-md">
           <h3 class="text-2xl font-bold mb-2">Report Your Confidence</h3>
-          <p class="text-slate-700">Confidence Level is how certain you feel about the correctness and completeness of your solution.</p>
+          <p class="text-slate-700">Confidence Level is how certain you feel about the correctness and completeness of
+            your solution.</p>
           <div class="mt-4">
             <input id="conf-slider" type="range" min="0" max="100" value="50" class="w-full">
-            <div class="text-sm text-slate-600 mt-1">Selected: <span id="conf-value" class="font-semibold">50</span>%</div>
+            <div class="text-sm text-slate-600 mt-1">Selected: <span id="conf-value" class="font-semibold">50</span>%
+            </div>
           </div>
           <div class="mt-6 flex justify-end gap-2">
-            <button id="conf-cancel" class="hidden px-4 py-2 rounded-xl border hover:bg-slate-50" aria-hidden="true" tabindex="-1">Cancel</button>
-            <button id="conf-submit" class="px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">Submit</button>
+            <button id="conf-cancel" class="hidden px-4 py-2 rounded-xl border hover:bg-slate-50" aria-hidden="true"
+              tabindex="-1">Cancel</button>
+            <button id="conf-submit"
+              class="px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">Submit</button>
           </div>
         </div>
       </div>
@@ -180,44 +226,70 @@
       <div id="start-timer-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
         <div class="bg-white rounded-2xl border border-slate-200 shadow-soft p-6 w-full max-w-md">
           <h3 class="text-2xl font-bold mb-2">Before You Begin</h3>
-          <p class="text-slate-700">You will have 10 minutes to complete each section. Click “OK” to start the timer.</p>
+          <p class="text-slate-700">You will have 10 minutes to complete each section. Click “OK” to start the timer.
+          </p>
           <div class="mt-6 flex justify-end gap-2">
-            <button id="start-timer-ok" class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">OK</button>
+            <button id="start-timer-ok"
+              class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">OK</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Proctoring Warning Modal -->
+      <div id="proctoring-warning-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-soft p-6 w-full max-w-md">
+          <div class="flex items-center mb-4">
+            <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mr-4">
+              <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z">
+                </path>
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold text-red-700">Proctoring Active</h3>
+          </div>
+          <p class="text-slate-700 mb-4">You are being proctored. Please remain focused on this assignment. Switching
+            tabs or leaving this page is being monitored.</p>
+          <div class="mt-6 flex justify-end gap-2">
+            <button id="proctoring-warning-ok" class="px-4 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700">I
+              understand</button>
           </div>
         </div>
       </div>
     </main>
 
     <div class="flex items-center gap-3">
-      <button id="btn-generate" class="hidden px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">Generate AI Feedback</button>
+      <button id="btn-generate"
+        class="hidden px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">Generate AI Feedback</button>
       <span id="feedback-ready" class="hidden text-xs text-slate-500"></span>
-      <button id="btn-survey" class="hidden px-4 py-2 rounded-xl bg-purple-600 text-white hover:bg-purple-700">Complete Survey</button>
-      </div>
+      <button id="btn-survey" class="hidden px-4 py-2 rounded-xl bg-purple-600 text-white hover:bg-purple-700">Complete
+        Survey</button>
+    </div>
 
-      <section id="output" class="hidden bg-white border border-slate-200 rounded-2xl shadow p-6">
-        <h2 class="text-lg font-semibold mb-4">AI Meta-Feedback</h2>
-      
-        <div class="space-y-3 text-sm">
-          <div id="block-plan" class="hidden">
-            <div class="font-semibold">Plan suggestions</div>
-            <ul id="out-plan-sugs" class="list-disc pl-5 text-slate-700 space-y-1"></ul>
-          </div>
-      
-          <div id="block-code" class="hidden">
-            <div class="font-semibold">Code suggestions</div>
-            <ul id="out-code-sugs" class="list-disc pl-5 text-slate-700 space-y-1"></ul>
-          </div>
-      
-          <div id="block-test" class="hidden">
-            <div class="font-semibold">Test suggestions</div>
-            <ul id="out-test-sugs" class="list-disc pl-5 text-slate-700 space-y-1"></ul>
-          </div>
+    <section id="output" class="hidden bg-white border border-slate-200 rounded-2xl shadow p-6">
+      <h2 class="text-lg font-semibold mb-4">AI Meta-Feedback</h2>
+
+      <div class="space-y-3 text-sm">
+        <div id="block-plan" class="hidden">
+          <div class="font-semibold">Plan suggestions</div>
+          <ul id="out-plan-sugs" class="list-disc pl-5 text-slate-700 space-y-1"></ul>
         </div>
-      </section>
-      
-  
-      
-      <!-- Success Modal -->
+
+        <div id="block-code" class="hidden">
+          <div class="font-semibold">Code suggestions</div>
+          <ul id="out-code-sugs" class="list-disc pl-5 text-slate-700 space-y-1"></ul>
+        </div>
+
+        <div id="block-test" class="hidden">
+          <div class="font-semibold">Test suggestions</div>
+          <ul id="out-test-sugs" class="list-disc pl-5 text-slate-700 space-y-1"></ul>
+        </div>
+      </div>
+    </section>
+
+
+
+    <!-- Success Modal -->
     <div id="success-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
       <div class="bg-white rounded-2xl border border-slate-200 shadow-soft p-6 w-full max-w-md">
         <h3 class="text-2xl font-bold mb-2">Submission Successful</h3>
@@ -233,30 +305,33 @@
     <div id="extend-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
       <div class="bg-white rounded-2xl border border-slate-200 shadow-soft p-6 w-full max-w-md">
         <h3 class="text-2xl font-bold mb-2">Time's Up</h3>
-        <p class="text-slate-700">Do you need 3 more minutes for this section? If you choose No, your current answer will be submitted and the next section will open.</p>
+        <p class="text-slate-700">Do you need 3 more minutes for this section? If you choose No, your current answer
+          will be submitted and the next section will open.</p>
         <div class="mt-6 flex justify-end gap-2">
           <button id="extend-no" class="px-4 py-2 rounded-xl border hover:bg-slate-50">No</button>
-          <button id="extend-yes" class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">Yes, add 3 minutes</button>
+          <button id="extend-yes" class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">Yes, add 3
+            minutes</button>
         </div>
       </div>
     </div>
 
-    
-    </div>
 
   </div>
 
-    <!-- Feedback Pause Modal -->
-    <div id="pause-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
-      <div class="bg-white rounded-2xl border border-slate-200 shadow-soft p-6 w-full max-w-md">
-        <h3 class="text-2xl font-bold mb-2">Timer Paused</h3>
-        <p class="text-slate-700">You just received AI feedback. The timer for this section is paused for 2 minutes. Please read the feedback and revise your answer. The timer will resume automatically.</p>
-        <div class="mt-6 flex justify-end gap-2">
-          <button id="ok-pause" class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">OK</button>
-        </div>
+  </div>
+
+  <!-- Feedback Pause Modal -->
+  <div id="pause-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-soft p-6 w-full max-w-md">
+      <h3 class="text-2xl font-bold mb-2">Timer Paused</h3>
+      <p class="text-slate-700">You just received AI feedback. The timer for this section is paused for 2 minutes.
+        Please read the feedback and revise your answer. The timer will resume automatically.</p>
+      <div class="mt-6 flex justify-end gap-2">
+        <button id="ok-pause" class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">OK</button>
       </div>
     </div>
-  
+  </div>
+
   <!-- Admin -->
   <div id="admin-page" class="hidden p-6 md:p-10 mx-auto max-w-7xl space-y-6">
     <header class="flex items-center justify-between">
@@ -271,12 +346,14 @@
     <section class="bg-white rounded-2xl border border-slate-200 shadow-soft p-5">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-xl font-semibold">Current Assignment/Domain Context</h2>
-        <button id="btn-set-context" class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">Set Context</button>
+        <button id="btn-set-context" class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">Set
+          Context</button>
       </div>
       <div class="flex items-center gap-4">
         <div class="flex items-center gap-2">
           <label class="text-sm text-slate-600">Assignment:</label>
-          <span id="current-assignment" class="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg font-medium">Assignment 1 - Group 1</span>
+          <span id="current-assignment" class="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg font-medium">Assignment 1
+            - Group 1</span>
         </div>
         <div class="flex items-center gap-2">
           <label class="text-sm text-slate-600">Domain:</label>
@@ -291,8 +368,10 @@
         <h2 class="text-xl font-semibold">AI Feedback Controls</h2>
       </div>
       <div class="flex gap-3">
-        <button id="btn-enable-feedback-all" class="px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">Enable for All Users</button>
-        <button id="btn-disable-feedback-all" class="px-4 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700">Disable for All Users</button>
+        <button id="btn-enable-feedback-all"
+          class="px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">Enable for All Users</button>
+        <button id="btn-disable-feedback-all"
+          class="px-4 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700">Disable for All Users</button>
       </div>
       <p id="feedback-toggle-status" class="hidden mt-3 text-sm"></p>
     </section>
@@ -301,10 +380,12 @@
     <section class="bg-white rounded-2xl border border-slate-200 shadow-soft p-5">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-xl font-semibold">Evaluator Health</h2>
-        <button id="btn-check-evaluator" class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">Check Now</button>
+        <button id="btn-check-evaluator" class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">Check
+          Now</button>
       </div>
       <div class="flex items-center gap-3">
-        <span id="eval-status-chip" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-200 text-slate-700">Unknown</span>
+        <span id="eval-status-chip"
+          class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-200 text-slate-700">Unknown</span>
         <span id="eval-status-msg" class="text-sm text-slate-600"></span>
       </div>
     </section>
@@ -320,18 +401,23 @@
         <div class="flex flex-col md:flex-row md:items-center md:justify-between md:flex-wrap gap-3 mb-4">
           <h2 class="text-xl font-semibold">Assignment Questions</h2>
           <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto md:flex-wrap">
-            <select id="question-filter-assignment" class="border rounded-xl px-3 py-2 w-full sm:w-auto max-w-full min-w-0">
+            <select id="question-filter-assignment"
+              class="border rounded-xl px-3 py-2 w-full sm:w-auto max-w-full min-w-0">
               <option value="">All Assignments</option>
               <option value="Assignment 1 - Group 1">Assignment 1 - Group 1</option>
               <option value="Assignment 1 - Group 2">Assignment 1 - Group 2</option>
-              <option value="Assignment 1 - Group 1 without Meta-Feedback">Assignment 1 - Group 1 without Meta-Feedback</option>
-              <option value="Assignment 1 - Group 2 without Meta-Feedback">Assignment 1 - Group 2 without Meta-Feedback</option>
+              <option value="Assignment 1 - Group 1 without Meta-Feedback">Assignment 1 - Group 1 without Meta-Feedback
+              </option>
+              <option value="Assignment 1 - Group 2 without Meta-Feedback">Assignment 1 - Group 2 without Meta-Feedback
+              </option>
               <option value="Assignment 2 - Group 1">Assignment 2 - Group 1</option>
               <option value="Assignment 2 - Group 2">Assignment 2 - Group 2</option>
               <option value="Assignment 3">Assignment 3</option>
               <option value="Assignment 4">Assignment 4</option>
             </select>
-            <button id="btn-add-question" class="px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 self-start sm:self-auto">Add Question</button>
+            <button id="btn-add-question"
+              class="px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 self-start sm:self-auto">Add
+              Question</button>
           </div>
         </div>
         <div id="questions-list" class="space-y-3 max-h-[400px] overflow-y-auto"></div>
@@ -343,21 +429,42 @@
       </section>
     </div>
 
-    
+
 
     <!-- Confidence Level Management Section -->
     <section class="bg-white rounded-2xl border border-slate-200 shadow-soft p-5">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-xl font-semibold">Student Confidence Levels</h2>
         <div class="flex gap-2">
-          <button id="btn-refresh-confidence" class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">Refresh</button>
-          <button id="btn-delete-all-confidence" class="px-4 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700">Delete All</button>
+          <button id="btn-refresh-confidence"
+            class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">Refresh</button>
+          <button id="btn-delete-all-confidence"
+            class="px-4 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700">Delete All</button>
         </div>
       </div>
       <div class="mb-4">
-        <p class="text-sm text-slate-600">Students sorted by confidence level (lowest to highest) - the top half (lowest confidence) are highlighted for feedback consideration</p>
+        <p class="text-sm text-slate-600">Students sorted by confidence level (lowest to highest) - the top half (lowest
+          confidence) are highlighted for feedback consideration</p>
       </div>
       <div id="confidence-list" class="space-y-3 max-h-[400px] overflow-y-auto"></div>
+    </section>
+
+    <!-- Proctoring Activity Section -->
+    <section class="bg-white rounded-2xl border border-slate-200 shadow-soft p-5">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-semibold">Proctoring Activity</h2>
+        <div class="flex gap-2">
+          <button id="btn-refresh-proctoring"
+            class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">Refresh</button>
+          <select id="proctoring-filter-user" class="border rounded-xl px-3 py-2">
+            <option value="">All Users</option>
+          </select>
+        </div>
+      </div>
+      <div class="mb-4">
+        <p class="text-sm text-slate-600">Monitor student focus and tab switching activity during assignments</p>
+      </div>
+      <div id="proctoring-summary" class="space-y-3 max-h-[500px] overflow-y-auto"></div>
     </section>
 
     <!-- Context Setting Modal -->
@@ -367,7 +474,7 @@
           <h3 class="text-2xl font-bold">Set Assignment/Domain Context</h3>
           <button id="close-context-modal" class="text-slate-500 hover:text-slate-700 text-2xl">&times;</button>
         </div>
-        
+
         <form id="context-form" class="space-y-4">
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-2">Assignment</label>
@@ -375,15 +482,17 @@
               <option value="">Select Assignment</option>
               <option value="Assignment 1 - Group 1">Assignment 1 - Group 1</option>
               <option value="Assignment 1 - Group 2">Assignment 1 - Group 2</option>
-              <option value="Assignment 1 - Group 1 without Meta-Feedback">Assignment 1 - Group 1 without Meta-Feedback</option>
-              <option value="Assignment 1 - Group 2 without Meta-Feedback">Assignment 1 - Group 2 without Meta-Feedback</option>
+              <option value="Assignment 1 - Group 1 without Meta-Feedback">Assignment 1 - Group 1 without Meta-Feedback
+              </option>
+              <option value="Assignment 1 - Group 2 without Meta-Feedback">Assignment 1 - Group 2 without Meta-Feedback
+              </option>
               <option value="Assignment 2 - Group 1">Assignment 2 - Group 1</option>
               <option value="Assignment 2 - Group 2">Assignment 2 - Group 2</option>
               <option value="Assignment 3">Assignment 3</option>
               <option value="Assignment 4">Assignment 4</option>
             </select>
           </div>
-          
+
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-2">Domain</label>
             <select id="context-domain" class="w-full border rounded-xl px-3 py-2" required>
@@ -396,10 +505,12 @@
               <option value="Strings (KMP/Rabin-Karp)">Strings (KMP/Rabin-Karp)</option>
             </select>
           </div>
-          
+
           <div class="flex gap-3 pt-4">
-            <button type="submit" id="save-context" class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">Set Context</button>
-            <button type="button" id="cancel-context" class="px-4 py-2 rounded-xl border hover:bg-slate-50">Cancel</button>
+            <button type="submit" id="save-context"
+              class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">Set Context</button>
+            <button type="button" id="cancel-context"
+              class="px-4 py-2 rounded-xl border hover:bg-slate-50">Cancel</button>
           </div>
         </form>
       </div>
@@ -407,12 +518,13 @@
 
     <!-- Question Modal -->
     <div id="question-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div class="bg-white rounded-2xl border border-slate-200 shadow-soft p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
+      <div
+        class="bg-white rounded-2xl border border-slate-200 shadow-soft p-6 w-full max-w-2xl max-h-[80vh] overflow-y-auto">
         <div class="flex items-center justify-between mb-6">
           <h3 class="text-2xl font-bold" id="question-modal-title">Add Question</h3>
           <button id="close-question-modal" class="text-slate-500 hover:text-slate-700 text-2xl">&times;</button>
         </div>
-        
+
         <form id="question-form" class="space-y-4">
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-2">Assignment</label>
@@ -420,15 +532,17 @@
               <option value="">Select Assignment</option>
               <option value="Assignment 1 - Group 1">Assignment 1 - Group 1</option>
               <option value="Assignment 1 - Group 2">Assignment 1 - Group 2</option>
-              <option value="Assignment 1 - Group 1 without Meta-Feedback">Assignment 1 - Group 1 without Meta-Feedback</option>
-              <option value="Assignment 1 - Group 2 without Meta-Feedback">Assignment 1 - Group 2 without Meta-Feedback</option>
+              <option value="Assignment 1 - Group 1 without Meta-Feedback">Assignment 1 - Group 1 without Meta-Feedback
+              </option>
+              <option value="Assignment 1 - Group 2 without Meta-Feedback">Assignment 1 - Group 2 without Meta-Feedback
+              </option>
               <option value="Assignment 2 - Group 1">Assignment 2 - Group 1</option>
               <option value="Assignment 2 - Group 2">Assignment 2 - Group 2</option>
               <option value="Assignment 3">Assignment 3</option>
               <option value="Assignment 4">Assignment 4</option>
             </select>
           </div>
-          
+
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-2">Domain</label>
             <select id="question-domain" class="w-full border rounded-xl px-3 py-2" required>
@@ -441,20 +555,24 @@
               <option value="Strings (KMP/Rabin-Karp)">Strings (KMP/Rabin-Karp)</option>
             </select>
           </div>
-          
+
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-2">Question Text</label>
-            <textarea id="question-text" class="w-full border rounded-xl p-3 min-h-[120px]" placeholder="Enter the assignment question text..." required></textarea>
+            <textarea id="question-text" class="w-full border rounded-xl p-3 min-h-[120px]"
+              placeholder="Enter the assignment question text..." required></textarea>
           </div>
-          
+
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-2">Rubric/Notes (Optional)</label>
-            <textarea id="question-rubric" class="w-full border rounded-xl p-3 min-h-[80px]" placeholder="Enter rubric or additional notes..."></textarea>
+            <textarea id="question-rubric" class="w-full border rounded-xl p-3 min-h-[80px]"
+              placeholder="Enter rubric or additional notes..."></textarea>
           </div>
-          
+
           <div class="flex gap-3 pt-4">
-            <button type="submit" id="save-question" class="px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">Save Question</button>
-            <button type="button" id="cancel-question" class="px-4 py-2 rounded-xl border hover:bg-slate-50">Cancel</button>
+            <button type="submit" id="save-question"
+              class="px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">Save Question</button>
+            <button type="button" id="cancel-question"
+              class="px-4 py-2 rounded-xl border hover:bg-slate-50">Cancel</button>
           </div>
         </form>
       </div>
@@ -465,12 +583,12 @@
   <script>
     // Use current origin for API calls (works with both localhost and ngrok)
     // For ngrok, use the same origin; for localhost, use port 8000
-    const API_URL = window.location.hostname.includes('ngrok') 
-      ? window.location.origin 
+    const API_URL = window.location.hostname.includes('ngrok')
+      ? window.location.origin
       : window.location.origin.replace(/:\d+$/, ':8000');
     const $ = (id) => document.getElementById(id);
     const li = (txt) => { const el = document.createElement('li'); el.textContent = txt; return el; };
-    
+
     // HTML escaping function to prevent XSS and display issues
     function escapeHtml(text) {
       if (!text) return '';
@@ -496,7 +614,7 @@
       }
     }
 
-    
+
 
 
     function togglePassword(inputId, button) {
@@ -514,14 +632,139 @@
         const lp = document.getElementById('login-password'); if (lp) lp.value = '';
         const su = document.getElementById('signup-username'); if (su) su.value = '';
         const sp = document.getElementById('signup-password'); if (sp) sp.value = '';
-      } catch(_) {}
+      } catch (_) { }
     }
 
     let token = localStorage.getItem('token');
     let username = localStorage.getItem('username');
     let isAdmin = localStorage.getItem('isAdmin') === 'true';
 
-    // Draft persistence 
+    // Proctoring functionality
+    let proctoringActive = false;
+    let focusLostTime = null;
+    let hasShownWarning = false;
+
+    // Log proctoring events
+    async function logProctoringEvent(eventType, durationAway = null) {
+      // Multiple checks to ensure we're in a valid authenticated session
+      if (!token || !proctoringActive || !username || isAdmin) {
+        console.log('Proctoring event not logged - token:', !!token, 'active:', proctoringActive, 'username:', !!username, 'isAdmin:', isAdmin);
+        return;
+      }
+
+      try {
+        const currentSection = getCurrentSection();
+        const response = await fetch(`${API_URL}/proctoring/event`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({
+            event_type: eventType,
+            assignment: currentContext?.assignment || null,
+            domain: currentContext?.domain || null,
+            current_section: currentSection,
+            duration_away: durationAway,
+            user_agent: navigator.userAgent
+          })
+        });
+
+        if (!response.ok) {
+          console.warn('Proctoring event failed:', response.status, response.statusText);
+        } else {
+          console.log('Proctoring event logged:', eventType);
+        }
+      } catch (e) {
+        console.warn('Failed to log proctoring event:', e);
+      }
+    }    // Get current section based on UI state
+    function getCurrentSection() {
+      if (!$('part-a').classList.contains('hidden')) return 'part-a';
+      if (!$('part-b').classList.contains('hidden')) return 'part-b';
+      if (!$('part-c').classList.contains('hidden')) return 'part-c';
+      return null;
+    }
+
+    // Show proctoring warning
+    function showProctoringWarning() {
+      if (!hasShownWarning) {
+        $('proctoring-warning-modal').classList.remove('hidden');
+        hasShownWarning = true;
+      }
+    }
+
+    // Initialize proctoring when user page is shown
+    function initializeProctoring() {
+      if (proctoringActive || !token || !username || isAdmin) {
+        console.log('Proctoring not initialized - active:', proctoringActive, 'token:', !!token, 'username:', !!username, 'isAdmin:', isAdmin);
+        return;
+      }
+
+      // Double-check we're on the user page
+      if ($('user-page').classList.contains('hidden')) {
+        console.log('Proctoring not initialized - user page not visible');
+        return;
+      }
+
+      proctoringActive = true;
+      console.log('Proctoring initialized for user:', username);
+
+      // Add a small delay to avoid capturing initial page load events
+      setTimeout(() => {
+        // Page visibility change (tab switching)
+        document.addEventListener('visibilitychange', () => {
+          if (document.hidden) {
+            focusLostTime = Date.now();
+            logProctoringEvent('visibility_change');
+            showProctoringWarning();
+          } else {
+            if (focusLostTime) {
+              const durationAway = Math.round((Date.now() - focusLostTime) / 1000);
+              logProctoringEvent('focus_gained', durationAway);
+              focusLostTime = null;
+            }
+          }
+        });
+
+        // Window focus/blur events
+        window.addEventListener('blur', () => {
+          if (!focusLostTime) {
+            focusLostTime = Date.now();
+            logProctoringEvent('focus_lost');
+            showProctoringWarning();
+          }
+        });
+
+        window.addEventListener('focus', () => {
+          if (focusLostTime) {
+            const durationAway = Math.round((Date.now() - focusLostTime) / 1000);
+            logProctoringEvent('focus_gained', durationAway);
+            focusLostTime = null;
+          }
+        });
+
+        // Detect potential tab switches via keystrokes
+        document.addEventListener('keydown', (e) => {
+          // Detect common tab switching shortcuts
+          if ((e.ctrlKey || e.metaKey) && e.key === 'Tab') {
+            logProctoringEvent('tab_switch');
+            showProctoringWarning();
+          }
+          if (e.altKey && e.key === 'Tab') {
+            logProctoringEvent('tab_switch');
+            showProctoringWarning();
+          }
+        });
+
+        console.log('Proctoring initialized');
+      }, 1000); // Wait 1 second before activating proctoring to avoid initial page load events
+    }
+
+    // Stop proctoring (called on logout)
+    function stopProctoring() {
+      proctoringActive = false;
+      focusLostTime = null;
+      hasShownWarning = false;
+      console.log('Proctoring stopped');
+    }    // Draft persistence 
     function draftPayload() {
       return {
         assignment: currentContext.assignment,
@@ -549,8 +792,8 @@
         const data = await res.json();
         console.log('Draft data:', data); // Debug log
 
-        if (data.plan != null)  $('plan').value = data.plan;
-        if (data.code != null)  $('code').value = data.code;
+        if (data.plan != null) $('plan').value = data.plan;
+        if (data.code != null) $('code').value = data.code;
         if (data.tests != null) $('tests').value = data.tests;
 
         // Do not auto-show restored feedback markdown; visibility is step-aware via localStorage only
@@ -593,7 +836,7 @@
     }
 
     // Add event listeners for auto-save
-    ['plan','code','tests'].forEach(id => {
+    ['plan', 'code', 'tests'].forEach(id => {
       $(id).addEventListener('input', debounceSave);
     });
 
@@ -627,7 +870,7 @@
       return `mf_passed_parts_${u}_${a}_${d}`;
     }
     function persistPassedParts() {
-      try { localStorage.setItem(getPassedPartsStorageKey(), JSON.stringify(passedParts)); } catch(_) {}
+      try { localStorage.setItem(getPassedPartsStorageKey(), JSON.stringify(passedParts)); } catch (_) { }
     }
     function restorePassedPartsFromStorage() {
       try {
@@ -636,7 +879,7 @@
         const obj = JSON.parse(raw);
         if (!obj) return;
         passedParts.A = !!obj.A; passedParts.B = !!obj.B; passedParts.C = !!obj.C;
-      } catch(_) {}
+      } catch (_) { }
     }
     // Highest step number the user is allowed to open (1..3)
     let highestStepUnlocked = 1;
@@ -664,7 +907,7 @@
     }
     function restoreLastFeedbackIfAny() {
       // Only show feedback for the active section
-      try { syncFeedbackForCurrentStep(); } catch(_) {}
+      try { syncFeedbackForCurrentStep(); } catch (_) { }
     }
 
     // Timer persistence helpers (per user + assignment + domain + step)
@@ -693,7 +936,7 @@
         } else {
           $('output').classList.add('hidden');
         }
-      } catch(_) {
+      } catch (_) {
         $('output').classList.add('hidden');
       }
     }
@@ -718,13 +961,13 @@
         if (currentStep === 1 || currentStep === 2 || currentStep === 3) {
           if (enable) {
             genBtn.disabled = false;
-            genBtn.classList.remove('bg-slate-300','text-white','cursor-not-allowed');
+            genBtn.classList.remove('bg-slate-300', 'text-white', 'cursor-not-allowed');
             genBtn.classList.add('bg-emerald-600');
-            try { checkFeedbackStatus(); } catch(_) {}
+            try { checkFeedbackStatus(); } catch (_) { }
           } else {
             genBtn.disabled = true;
             genBtn.classList.remove('bg-emerald-600');
-            genBtn.classList.add('bg-slate-300','text-white','cursor-not-allowed');
+            genBtn.classList.add('bg-slate-300', 'text-white', 'cursor-not-allowed');
             if (readyLabel) readyLabel.classList.add('hidden');
           }
         }
@@ -739,7 +982,7 @@
       return `mf_current_step_${u}_${a}_${d}`;
     }
     function persistCurrentStep() {
-      try { localStorage.setItem(getCurrentStepStorageKey(), String(currentStep)); } catch(_) {}
+      try { localStorage.setItem(getCurrentStepStorageKey(), String(currentStep)); } catch (_) { }
     }
     function restoreCurrentStepFromStorage() {
       try {
@@ -750,11 +993,11 @@
             currentStep = val;
           }
         }
-      } catch(_) {}
+      } catch (_) { }
     }
 
     function loadAllTimersFromStorage() {
-      [1,2,3].forEach(s => {
+      [1, 2, 3].forEach(s => {
         const key = getTimerStorageKey(s);
         const raw = localStorage.getItem(key);
         const val = parseInt(raw, 10);
@@ -763,7 +1006,7 @@
         } else {
           // Initialize to full duration for brand-new users/assignments
           timeLeft[s] = STEP_LIMIT_SECONDS;
-          try { localStorage.setItem(key, String(timeLeft[s])); } catch(_) {}
+          try { localStorage.setItem(key, String(timeLeft[s])); } catch (_) { }
         }
         updateTimerDisplay(s);
       });
@@ -771,7 +1014,7 @@
 
     function persistTimer(step) {
       const key = getTimerStorageKey(step);
-      try { localStorage.setItem(key, String(Math.max(0, timeLeft[step] | 0))); } catch (_) {}
+      try { localStorage.setItem(key, String(Math.max(0, timeLeft[step] | 0))); } catch (_) { }
     }
 
     // Submission persistence helper (guards timeout popups for already-submitted steps)
@@ -782,7 +1025,7 @@
       return `mf_submitted_${u}_${a}_${d}_step_${step}`;
     }
     function markSubmitted(step) {
-      try { localStorage.setItem(getSubmittedKey(step), '1'); } catch(_) {}
+      try { localStorage.setItem(getSubmittedKey(step), '1'); } catch (_) { }
     }
     function hasSubmittedStep(step) {
       const local = localStorage.getItem(getSubmittedKey(step)) === '1';
@@ -806,7 +1049,7 @@
 
     function startStepTimer(step) {
       // Stop other timers
-      [1,2,3].forEach(s => { if (timers[s]) { clearInterval(timers[s]); timers[s] = null; } });
+      [1, 2, 3].forEach(s => { if (timers[s]) { clearInterval(timers[s]); timers[s] = null; } });
       // Initialize display
       // Safeguard: if no persisted value exists for this user/assignment/domain+step, start fresh 10:00
       try {
@@ -819,7 +1062,7 @@
         } else {
           timeLeft[step] = val; // resume persisted
         }
-      } catch(_) {}
+      } catch (_) { }
       updateTimerDisplay(step);
       // Start countdown for this step
       timers[step] = setInterval(() => {
@@ -873,14 +1116,14 @@
     }
     function handleTimeUpForStep(step) {
       // If we have already offered extension before (memory or storage), auto-submit and proceed (no second offer)
-      try { if (localStorage.getItem(getExtensionKey(step)) === '1') extensionOffered[step] = true; } catch(_) {}
+      try { if (localStorage.getItem(getExtensionKey(step)) === '1') extensionOffered[step] = true; } catch (_) { }
       if (extensionOffered[step]) {
         autoSubmitAndProceed(step);
         return;
       }
       // Offer one-time 3-minute extension and mark as offered immediately (persist)
       extensionOffered[step] = true;
-      try { localStorage.setItem(getExtensionKey(step), '1'); } catch(_) {}
+      try { localStorage.setItem(getExtensionKey(step), '1'); } catch (_) { }
       const m = $('extend-modal'); if (m) m.classList.remove('hidden');
       // Wire buttons (one-off handlers)
       const yesBtn = $('extend-yes');
@@ -925,7 +1168,7 @@
           await submitPartC();
         }
         // Next step navigation will be controlled by confidence gating
-      } catch (_) {}
+      } catch (_) { }
     }
 
     // Restore progress and step from server submissions for current assignment/domain
@@ -967,7 +1210,7 @@
       for (let i = 1; i <= 3; i++) {
         const indicator = $(`step-${i}-indicator`);
         const label = $(`step-${i}-label`);
-        
+
         if (i < currentStep) {
           // Completed steps
           indicator.className = 'w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center text-sm font-semibold';
@@ -1011,7 +1254,7 @@
 
     // Allow clicking progress indicators: only current or unlocked steps
     function enableStepClicks() {
-      const steps = [1,2,3];
+      const steps = [1, 2, 3];
       steps.forEach(i => {
         const target = $(`step-${i}-indicator`);
         const label = $(`step-${i}-label`);
@@ -1047,7 +1290,7 @@
       return false;
     }
 
-    
+
 
     // Auth 
     async function login() {
@@ -1108,9 +1351,13 @@
         localStorage.removeItem('token');
         localStorage.removeItem('username');
         localStorage.removeItem('isAdmin');
-      } catch(_) {}
-      try { sessionStorage.clear(); } catch(_) {}
+      } catch (_) { }
+      try { sessionStorage.clear(); } catch (_) { }
       token = null; username = null; isAdmin = false;
+
+      // Stop proctoring when logging out
+      stopProctoring();
+
       $('auth-page').classList.remove('hidden');
       $('user-page').classList.add('hidden');
       $('admin-page').classList.add('hidden');
@@ -1119,10 +1366,10 @@
 
     async function showDashboard() {
       $('auth-page').classList.add('hidden');
-      
+
       // Initialize context display
       updateContextDisplay();
-      
+
       if (isAdmin) {
         $('admin-page').classList.remove('hidden');
         $('user-page').classList.add('hidden');
@@ -1132,7 +1379,7 @@
       } else {
         $('user-page').classList.remove('hidden');
         $('user-name').textContent = username;
-        
+
         // Restore step from server before initial render
         await restoreStepFromServer();
         restorePassedPartsFromStorage();
@@ -1149,18 +1396,21 @@
         enableStepClicks();
         // Restore last feedback (if any) for this user/assignment/domain
         restoreLastFeedbackIfAny();
-        
+
         // Hide action buttons initially
         $('btn-generate').classList.add('hidden');
         $('btn-survey').classList.add('hidden');
-        
+
         await loadDraft();          // <-- restore from server on entry
         await checkFeedbackStatus();
-        
+
         // Log view_feedback if feedback is visible
         if (!$('output').classList.contains('hidden')) {
           logEvent('view_feedback', currentContext.assignment, currentContext.domain);
         }
+
+        // Initialize proctoring for students
+        initializeProctoring();
       }
     }
 
@@ -1188,7 +1438,7 @@
     let lastSubmittedStep = null;
     async function submitPartA() {
       const plan = $('plan').value.trim();
-      
+
       if (!plan) {
         alert('❌ Please write your design plan before submitting Part A.');
         return;
@@ -1216,10 +1466,10 @@
         alert('✅ Part A submitted successfully!');
         lastSubmittedStep = 1;
         showConfidenceModal();
-        
+
         // Log the submission
         logEvent('submit_part_a', currentContext.assignment, currentContext.domain);
-        
+
       } catch (e) {
         alert(e.message);
         console.error('Part A submission failed:', e);
@@ -1228,7 +1478,7 @@
 
     async function submitPartB() {
       const code = $('code').value.trim();
-      
+
       if (!code) {
         alert('❌ Please write your code before submitting Part B.');
         return;
@@ -1256,10 +1506,10 @@
         alert('✅ Part B submitted successfully!');
         lastSubmittedStep = 2;
         showConfidenceModal();
-        
+
         // Log the submission
         logEvent('submit_part_b', currentContext.assignment, currentContext.domain);
-        
+
       } catch (e) {
         alert(e.message);
         console.error('Part B submission failed:', e);
@@ -1268,7 +1518,7 @@
 
     async function submitPartC() {
       const tests = $('tests').value.trim();
-      
+
       if (!tests) {
         alert('❌ Please write your tests before submitting Part C.');
         return;
@@ -1294,15 +1544,15 @@
         stepProgress.partC = true;
         markSubmitted(3);
         alert('✅ Part C submitted successfully!');
-        
+
         // Show generate feedback button
         $('btn-generate').classList.remove('hidden');
         lastSubmittedStep = 3;
         showConfidenceModal();
-        
+
         // Log the submission
         logEvent('submit_part_c', currentContext.assignment, currentContext.domain);
-        
+
       } catch (e) {
         alert(e.message);
         console.error('Part C submission failed:', e);
@@ -1315,7 +1565,7 @@
         alert('Admin users cannot submit assignments. Please log in as a student.');
         return;
       }
-      
+
       const payload = {
         assignment: currentContext.assignment,
         domain: currentContext.domain,
@@ -1323,13 +1573,13 @@
         code: $('code').value,
         tests: $('tests').value
       };
-      
+
       // Validate required fields
       if (!payload.plan || !payload.code || !payload.tests) {
         alert('❌ Please fill in all required fields before submitting.');
         return;
       }
-      
+
       try {
         // Submit assignment first
         const res = await fetch(`${API_URL}/submit`, {
@@ -1337,18 +1587,18 @@
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
           body: JSON.stringify(payload)
         });
-        
+
         if (!res.ok) throw new Error('❌ Submission failed. Please try again.');
-        
-        
+
+
         // Show success message
         alert('✅ Submission Successful!\n\nYour assignment has been submitted.');
-        
+
         // Check if this is the user's first submission
         const isFirstSubmission = await checkIfFirstSubmission();
-        
+
         // Confidence section removed
-        
+
         await checkFeedbackStatus();
       } catch (e) {
         alert('❌ ' + e.message);
@@ -1365,7 +1615,7 @@
         const data = await res.json();
         feedbackEligibility.enabled = !!data.enabled;
         feedbackEligibility.remaining = Math.max(0, (data.max_feedback || 0) - (data.feedback_count || 0));
-        
+
         if (data.enabled) {
           // Start 4-minute cooldown only after user consents to start timers
           if (timersEnabled) {
@@ -1378,13 +1628,13 @@
           } else if (data.feedback_count > 0) {
             // After 1st feedback, keep feedback button available
             $('btn-generate').classList.remove('hidden');
-            $('btn-generate').classList.remove('bg-slate-300','text-white','cursor-not-allowed');
+            $('btn-generate').classList.remove('bg-slate-300', 'text-white', 'cursor-not-allowed');
             $('btn-generate').classList.add('bg-emerald-600');
             $('btn-generate').textContent = 'Get Meta-Feedback Again';
           } else {
             // First feedback, show feedback button
             $('btn-generate').classList.remove('hidden');
-            $('btn-generate').classList.remove('bg-slate-300','text-white','cursor-not-allowed');
+            $('btn-generate').classList.remove('bg-slate-300', 'text-white', 'cursor-not-allowed');
             $('btn-generate').classList.add('bg-emerald-600');
             $('btn-generate').textContent = 'Generate AI Feedback';
           }
@@ -1392,7 +1642,7 @@
           // Disabled globally: show greyed-out button
           $('btn-generate').classList.remove('hidden');
           $('btn-generate').classList.remove('bg-emerald-600');
-          $('btn-generate').classList.add('bg-slate-300','text-white','cursor-not-allowed');
+          $('btn-generate').classList.add('bg-slate-300', 'text-white', 'cursor-not-allowed');
           $('btn-generate').disabled = true;
           $('btn-generate').textContent = 'AI Feedback Disabled';
           $('feedback-ready').classList.add('hidden');
@@ -1422,7 +1672,7 @@
       // If cooldown already completed earlier in this session/device, do not restart
       if (localStorage.getItem(doneKey) === '1') {
         readyLabel.classList.add('hidden');
-        $('btn-generate').classList.remove('bg-slate-300','text-white','cursor-not-allowed');
+        $('btn-generate').classList.remove('bg-slate-300', 'text-white', 'cursor-not-allowed');
         $('btn-generate').classList.add('bg-emerald-600');
         $('btn-generate').disabled = false;
         return;
@@ -1436,16 +1686,16 @@
         } else {
           // If a stored end exists but already passed, mark done
           if (stored && stored <= now) {
-            try { localStorage.setItem(doneKey, '1'); localStorage.removeItem(endKey); } catch(_) {}
+            try { localStorage.setItem(doneKey, '1'); localStorage.removeItem(endKey); } catch (_) { }
             readyLabel.classList.add('hidden');
-            $('btn-generate').classList.remove('bg-slate-300','text-white','cursor-not-allowed');
+            $('btn-generate').classList.remove('bg-slate-300', 'text-white', 'cursor-not-allowed');
             $('btn-generate').classList.add('bg-emerald-600');
             $('btn-generate').disabled = false;
             return;
           }
           // No previous cooldown; start one now
           end = now + 4 * 60 * 1000; // 4 minutes
-          try { localStorage.setItem(endKey, String(end)); } catch(_) {}
+          try { localStorage.setItem(endKey, String(end)); } catch (_) { }
         }
         feedbackCooldown.endTime = end;
       }
@@ -1454,23 +1704,23 @@
         const ms = end - now;
         if (ms > 0) {
           const sec = Math.ceil(ms / 1000);
-          const m = Math.floor(sec / 60).toString().padStart(2,'0');
-          const s = (sec % 60).toString().padStart(2,'0');
+          const m = Math.floor(sec / 60).toString().padStart(2, '0');
+          const s = (sec % 60).toString().padStart(2, '0');
           readyLabel.textContent = `Generate AI Feedback will be enabled in ${m}:${s}`;
           readyLabel.classList.remove('hidden');
           // Force disabled style during cooldown
           $('btn-generate').classList.remove('bg-emerald-600');
-          $('btn-generate').classList.add('bg-slate-300','text-white','cursor-not-allowed');
+          $('btn-generate').classList.add('bg-slate-300', 'text-white', 'cursor-not-allowed');
           $('btn-generate').disabled = true;
         } else {
           // Cooldown complete
           readyLabel.classList.add('hidden');
-          $('btn-generate').classList.remove('bg-slate-300','text-white','cursor-not-allowed');
+          $('btn-generate').classList.remove('bg-slate-300', 'text-white', 'cursor-not-allowed');
           $('btn-generate').classList.add('bg-emerald-600');
           $('btn-generate').disabled = false;
           if (feedbackCooldown.intervalId) clearInterval(feedbackCooldown.intervalId);
           feedbackCooldown.intervalId = null;
-          try { localStorage.setItem(doneKey, '1'); localStorage.removeItem(endKey); } catch(_) {}
+          try { localStorage.setItem(doneKey, '1'); localStorage.removeItem(endKey); } catch (_) { }
         }
       };
       if (feedbackCooldown.intervalId) return; // already running
@@ -1484,122 +1734,123 @@
         if (feedbackCooldown.intervalId) clearInterval(feedbackCooldown.intervalId);
         feedbackCooldown.intervalId = null;
         feedbackCooldown.endTime = 0;
-      } catch(_) {}
+      } catch (_) { }
       const readyLabel = $('feedback-ready');
       if (readyLabel) readyLabel.classList.add('hidden');
     }
 
     async function generateFeedback() {
-  const payload = {
-    assignment: currentContext.assignment,
-    domain: currentContext.domain,
-    plan: $('plan').value,
-    code: $('code').value,
-    tests: $('tests').value
-  };
+      const payload = {
+        assignment: currentContext.assignment,
+        domain: currentContext.domain,
+        plan: $('plan').value,
+        code: $('code').value,
+        tests: $('tests').value
+      };
 
-  $('btn-generate').disabled = true;
-  $('btn-generate').textContent = 'Analyzing…';
+      $('btn-generate').disabled = true;
+      $('btn-generate').textContent = 'Analyzing…';
 
-  // log click
-  logEvent('generate_click', payload.assignment, payload.domain);
+      // log click
+      logEvent('generate_click', payload.assignment, payload.domain);
 
-  try {
-    // IMPORTANT: keep the leading slash if you don’t use API_URL
-    const res = await fetch(`${API_URL}/analyze`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify(payload)
-    });
+      try {
+        // IMPORTANT: keep the leading slash if you don’t use API_URL
+        const res = await fetch(`${API_URL}/analyze`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(payload)
+        });
 
-    // read as TEXT first to avoid "Unexpected token 'I'..." on 500s
-    const raw = await res.text();
-    let data;
-    try {
-      data = JSON.parse(raw);
-    } catch {
-      alert('Analyze failed (non-JSON response):\n' + raw.slice(0, 200));
-      return;
+        // read as TEXT first to avoid "Unexpected token 'I'..." on 500s
+        const raw = await res.text();
+        let data;
+        try {
+          data = JSON.parse(raw);
+        } catch {
+          alert('Analyze failed (non-JSON response):\n' + raw.slice(0, 200));
+          return;
+        }
+
+        if (!res.ok) {
+          // backend should send {detail: "..."} or {error, detail}
+          alert('Analyze failed: ' + (data.detail || data.error || 'Unknown'));
+          return;
+        }
+
+        // RENDER: only current part suggestions
+        const part = (lastSubmittedStep === 1 ? 'A' : lastSubmittedStep === 2 ? 'B' : lastSubmittedStep === 3 ? 'C' : (currentStep === 1 ? 'A' : currentStep === 2 ? 'B' : 'C'));
+        renderSuggestionsForPart(data, part);
+        $('output').classList.remove('hidden');
+        // Persist feedback for refresh restore
+        try { localStorage.setItem(getFeedbackStorageKey(), JSON.stringify({ data, part })); } catch (_) { }
+        $('restored-block')?.classList.add('hidden');
+        $('restored-md') && ($('restored-md').textContent = '');
+        // log viewing + persist draft
+        logEvent('view_feedback', payload.assignment, payload.domain);
+        await saveDraft();
+        await checkFeedbackStatus();
+        // Pause the timer for 2 minutes to allow reading feedback
+        if (timersEnabled) {
+          pauseCurrentStepTimerFor(2 * 60 * 1000);
+        } else {
+          // Show modal info even if timers not started yet
+          const m = $('pause-modal'); if (m) m.classList.remove('hidden');
+          setTimeout(() => { const mm = $('pause-modal'); if (mm) mm.classList.add('hidden'); }, 3000);
+        }
+
+      } catch (e) {
+        alert('❌ ' + (e.message || e));
+      } finally {
+        $('btn-generate').disabled = false;
+        $('btn-generate').textContent = 'Get Meta-Feedback Again';
+      }
     }
-
-    if (!res.ok) {
-      // backend should send {detail: "..."} or {error, detail}
-      alert('Analyze failed: ' + (data.detail || data.error || 'Unknown'));
-      return;
-    }
-
-    // RENDER: only current part suggestions
-    const part = (lastSubmittedStep === 1 ? 'A' : lastSubmittedStep === 2 ? 'B' : lastSubmittedStep === 3 ? 'C' : (currentStep === 1 ? 'A' : currentStep === 2 ? 'B' : 'C'));
-    renderSuggestionsForPart(data, part);
-    $('output').classList.remove('hidden');
-    // Persist feedback for refresh restore
-    try { localStorage.setItem(getFeedbackStorageKey(), JSON.stringify({ data, part })); } catch(_) {}
-    $('restored-block')?.classList.add('hidden');
-    $('restored-md') && ( $('restored-md').textContent = '' );
-    // log viewing + persist draft
-    logEvent('view_feedback', payload.assignment, payload.domain);
-    await saveDraft();
-    await checkFeedbackStatus();
-    // Pause the timer for 2 minutes to allow reading feedback
-    if (timersEnabled) {
-      pauseCurrentStepTimerFor(2 * 60 * 1000);
-    } else {
-      // Show modal info even if timers not started yet
-      const m = $('pause-modal'); if (m) m.classList.remove('hidden');
-      setTimeout(() => { const mm = $('pause-modal'); if (mm) mm.classList.add('hidden'); }, 3000);
-    }
-
-  } catch (e) {
-    alert('❌ ' + (e.message || e));
-  } finally {
-    $('btn-generate').disabled = false;
-    $('btn-generate').textContent = 'Get Meta-Feedback Again';
-  }
-}
 
     function renderList(id, arr) {
-  const ul = document.getElementById(id);
-  ul.innerHTML = '';
-  (arr || []).forEach(s => {
-    const li = document.createElement('li');
-    li.textContent = s;
-    ul.appendChild(li);
-  });
-}
+      const ul = document.getElementById(id);
+      ul.innerHTML = '';
+      (arr || []).forEach(s => {
+        const li = document.createElement('li');
+        li.textContent = s;
+        ul.appendChild(li);
+      });
+    }
 
-function renderSuggestionsForPart(data, part) {
-  // Hide all blocks first
-  ['block-plan','block-code','block-test'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.classList.add('hidden');
-  });
-  // Clear lists
-  ['out-plan-sugs','out-code-sugs','out-test-sugs'].forEach(id => {
-    const ul = document.getElementById(id);
-    if (ul) ul.innerHTML = '';
-  });
+    function renderSuggestionsForPart(data, part) {
+      // Hide all blocks first
+      ['block-plan', 'block-code', 'block-test'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('hidden');
+      });
+      // Clear lists
+      ['out-plan-sugs', 'out-code-sugs', 'out-test-sugs'].forEach(id => {
+        const ul = document.getElementById(id);
+        if (ul) ul.innerHTML = '';
+      });
 
-  if (part === 'A') {
-    renderList('out-plan-sugs', data.plan_suggestions || []);
-    $('block-plan').classList.remove('hidden');
-  } else if (part === 'B') {
-    renderList('out-code-sugs', data.code_suggestions || []);
-    $('block-code').classList.remove('hidden');
-  } else {
-    renderList('out-test-sugs', data.test_suggestions || []);
-    $('block-test').classList.remove('hidden');
-  }
-}
+      if (part === 'A') {
+        renderList('out-plan-sugs', data.plan_suggestions || []);
+        $('block-plan').classList.remove('hidden');
+      } else if (part === 'B') {
+        renderList('out-code-sugs', data.code_suggestions || []);
+        $('block-code').classList.remove('hidden');
+      } else {
+        renderList('out-test-sugs', data.test_suggestions || []);
+        $('block-test').classList.remove('hidden');
+      }
+    }
 
     // Admin
-    async function loadAdminData() { 
-      await loadUsers(); 
-      await loadSubmissions(); 
-      await loadQuestions(); 
-      await loadConfidenceLevels(); 
+    async function loadAdminData() {
+      await loadUsers();
+      await loadSubmissions();
+      await loadQuestions();
+      await loadConfidenceLevels();
+      await loadProctoringData();
       updateContextDisplay(); // Update context display for admin
     }
 
@@ -1625,10 +1876,10 @@ function renderSuggestionsForPart(data, part) {
       // Update the current context
       currentContext.assignment = assignment;
       currentContext.domain = domain;
-      
+
       // Update the display
       updateContextDisplay();
-      
+
       hideContextModal();
       alert('✅ Context updated successfully!');
     }
@@ -1667,11 +1918,11 @@ function renderSuggestionsForPart(data, part) {
         const res = await fetch(`${API_URL}/submissions`, { headers: { 'Authorization': `Bearer ${token}` } });
         const subs = await res.json();
         const c = $('submissions-list'); c.innerHTML = '';
-        subs.sort((a,b)=> new Date(b.timestamp) - new Date(a.timestamp));
+        subs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
         subs.forEach(sub => {
           const wrap = document.createElement('div');
           wrap.className = 'p-4 rounded-lg border bg-slate-50';
-          const time = new Date(sub.timestamp).toLocaleString('en-US', { 
+          const time = new Date(sub.timestamp).toLocaleString('en-US', {
             timeZone: 'America/Los_Angeles',
             year: 'numeric',
             month: '2-digit',
@@ -1719,14 +1970,14 @@ function renderSuggestionsForPart(data, part) {
         container.innerHTML = '';
         const filterSel = document.getElementById('question-filter-assignment');
         const filterValue = filterSel ? filterSel.value : '';
-        
+
         const filtered = filterValue ? questions.filter(q => q.assignment === filterValue) : questions;
 
         if (filtered.length === 0) {
           container.innerHTML = '<p class="text-slate-500 text-center py-4">No questions yet</p>';
           return;
         }
-        
+
         filtered.forEach(q => {
           const el = document.createElement('div');
           el.className = 'p-4 rounded-lg border bg-slate-50';
@@ -1770,7 +2021,7 @@ function renderSuggestionsForPart(data, part) {
           `;
           container.appendChild(el);
         });
-      } catch (e) { 
+      } catch (e) {
         console.error('loadQuestions', e);
         $('questions-list').innerHTML = '<p class="text-red-500 text-center py-4">Error loading questions</p>';
       }
@@ -1781,7 +2032,7 @@ function renderSuggestionsForPart(data, part) {
       $('question-modal').classList.remove('hidden');
       $('question-modal-title').textContent = questionId ? 'Edit Question' : 'Add Question';
       $('save-question').textContent = questionId ? 'Update Question' : 'Save Question';
-      
+
       if (questionId) {
         // Load question data for editing
         loadQuestionForEdit(questionId);
@@ -1802,7 +2053,7 @@ function renderSuggestionsForPart(data, part) {
         const res = await fetch(`${API_URL}/admin/questions`, { headers: { 'Authorization': `Bearer ${token}` } });
         const questions = await res.json();
         const question = questions.find(q => q.id === questionId);
-        
+
         if (question) {
           $('question-assignment').value = question.assignment;
           $('question-domain').value = question.domain;
@@ -1951,7 +2202,7 @@ function renderSuggestionsForPart(data, part) {
         alert('❌ ' + e.message);
       }
     }
-    
+
     async function deleteAllConfidenceSubmissions() {
       if (!confirm('⚠️ Are you sure you want to delete ALL submissions with confidence levels?\n\nThis will permanently delete all student confidence data!\n\nThis action cannot be undone!')) return;
 
@@ -1983,17 +2234,17 @@ function renderSuggestionsForPart(data, part) {
           fetch(`${API_URL}/admin/submissions-by-confidence`, { headers: { 'Authorization': `Bearer ${token}` } }),
           fetch(`${API_URL}/users`, { headers: { 'Authorization': `Bearer ${token}` } })
         ]);
-        
+
         const submissions = await confidenceRes.json();
         const users = await usersRes.json();
         const container = $('confidence-list');
         container.innerHTML = '';
-        
+
         if (submissions.length === 0) {
           container.innerHTML = '<p class="text-slate-500 text-center py-4">No submissions with confidence levels yet</p>';
           return;
         }
-        
+
         // Create a map of username to feedback status
         const userFeedbackMap = {};
         users.forEach(user => {
@@ -2001,16 +2252,16 @@ function renderSuggestionsForPart(data, part) {
             userFeedbackMap[user.username] = user.feedback_enabled;
           }
         });
-        
+
         // Calculate the top half threshold (lowest confidence students)
         const totalSubmissions = submissions.length;
         const topHalfThreshold = Math.ceil(totalSubmissions / 2);
-        
+
         submissions.forEach((sub, index) => {
           const isTopHalf = index < topHalfThreshold;
           const el = document.createElement('div');
           el.className = `p-4 rounded-lg border ${isTopHalf ? 'bg-red-50 border-red-200' : 'bg-slate-50'}`;
-          const time = new Date(sub.timestamp).toLocaleString('en-US', { 
+          const time = new Date(sub.timestamp).toLocaleString('en-US', {
             timeZone: 'America/Los_Angeles',
             year: 'numeric',
             month: '2-digit',
@@ -2022,7 +2273,7 @@ function renderSuggestionsForPart(data, part) {
           });
           const confidenceColor = sub.confidence_level < 30 ? 'text-red-600' : sub.confidence_level < 60 ? 'text-yellow-600' : 'text-green-600';
           const feedbackEnabled = userFeedbackMap[sub.username] || false;
-          
+
           el.innerHTML = `
             <div class="flex items-start justify-between mb-2">
               <div class="flex-1">
@@ -2057,7 +2308,7 @@ function renderSuggestionsForPart(data, part) {
           `;
           container.appendChild(el);
         });
-      } catch (e) { 
+      } catch (e) {
         console.error('loadConfidenceLevels', e);
         $('confidence-list').innerHTML = '<p class="text-red-500 text-center py-4">Error loading confidence levels</p>';
       }
@@ -2070,15 +2321,15 @@ function renderSuggestionsForPart(data, part) {
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
           body: JSON.stringify({ username, enabled })
         });
-        
+
         if (!res.ok) {
           const errorData = await res.json();
           throw new Error(errorData.detail || 'Failed to toggle feedback');
         }
-        
+
         const result = await res.json();
         console.log(`Feedback ${enabled ? 'enabled' : 'disabled'} for ${username}`);
-        
+
         // Refresh the confidence levels to show updated status
         await loadConfidenceLevels();
       } catch (e) {
@@ -2093,7 +2344,7 @@ function renderSuggestionsForPart(data, part) {
     function toggleQuestionText(questionId) {
       const textElement = $(`question-text-${questionId}`);
       const toggleButton = $(`toggle-btn-${questionId}`);
-      
+
       if (textElement.classList.contains('max-h-20')) {
         // Expand
         textElement.classList.remove('max-h-20', 'overflow-hidden');
@@ -2106,11 +2357,11 @@ function renderSuggestionsForPart(data, part) {
         toggleButton.textContent = 'Show Full';
       }
     }
-    
+
     function toggleRubricText(questionId) {
       const textElement = $(`rubric-text-${questionId}`);
       const toggleButton = $(`toggle-rubric-btn-${questionId}`);
-      
+
       if (textElement.classList.contains('max-h-20')) {
         // Expand
         textElement.classList.remove('max-h-20', 'overflow-hidden');
@@ -2121,6 +2372,128 @@ function renderSuggestionsForPart(data, part) {
         textElement.classList.remove('max-h-96', 'overflow-y-auto');
         textElement.classList.add('max-h-20', 'overflow-hidden');
         toggleButton.textContent = 'Show Full';
+      }
+    }
+
+    // Proctoring Management Functions
+    async function loadProctoringData() {
+      try {
+        const [summaryRes, usersRes] = await Promise.all([
+          fetch(`${API_URL}/admin/proctoring/summary`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(`${API_URL}/users`, { headers: { 'Authorization': `Bearer ${token}` } })
+        ]);
+
+        if (!summaryRes.ok) {
+          throw new Error(`Failed to load proctoring summary: ${summaryRes.status} ${summaryRes.statusText}`);
+        }
+        if (!usersRes.ok) {
+          throw new Error(`Failed to load users: ${usersRes.status} ${usersRes.statusText}`);
+        }
+
+        const summaries = await summaryRes.json();
+        const users = await usersRes.json();
+        const container = $('proctoring-summary');
+        const userFilter = $('proctoring-filter-user');
+
+        // Update user filter dropdown
+        userFilter.innerHTML = '<option value="">All Users</option>';
+        users.forEach(user => {
+          if (user.username !== 'admin') {
+            const option = document.createElement('option');
+            option.value = user.username;
+            option.textContent = user.username;
+            userFilter.appendChild(option);
+          }
+        });
+
+        // Display proctoring summaries
+        container.innerHTML = '';
+
+        if (summaries.length === 0) {
+          container.innerHTML = '<p class="text-slate-500 text-center py-4">No proctoring activity recorded yet</p>';
+          return;
+        }
+
+        // Sort by total focus lost events (most problematic first)
+        summaries.sort((a, b) => b.total_focus_lost_events - a.total_focus_lost_events);
+
+        summaries.forEach(summary => {
+          const el = document.createElement('div');
+          const timeAwayMinutes = Math.round(summary.total_time_away / 60);
+          const riskLevel = summary.total_focus_lost_events >= 5 ? 'high' : summary.total_focus_lost_events >= 2 ? 'medium' : 'low';
+          const riskColor = riskLevel === 'high' ? 'bg-red-50 border-red-200' : riskLevel === 'medium' ? 'bg-yellow-50 border-yellow-200' : 'bg-green-50 border-green-200';
+
+          el.className = `p-4 rounded-lg border ${riskColor}`;
+          el.innerHTML = `
+            <div class="flex items-start justify-between mb-3">
+              <div>
+                <span class="font-medium text-slate-900">${summary.username}</span>
+                <span class="ml-2 text-xs px-2 py-1 rounded-full ${riskLevel === 'high' ? 'bg-red-100 text-red-700' : riskLevel === 'medium' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700'}">${riskLevel.toUpperCase()} RISK</span>
+              </div>
+              <div class="text-xs text-slate-500">
+                Last activity: ${summary.last_activity}
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4 mb-3">
+              <div class="text-sm">
+                <span class="text-slate-600">Focus Lost Events:</span>
+                <span class="font-semibold ml-1">${summary.total_focus_lost_events}</span>
+              </div>
+              <div class="text-sm">
+                <span class="text-slate-600">Time Away:</span>
+                <span class="font-semibold ml-1">${timeAwayMinutes} min</span>
+              </div>
+            </div>
+            <details class="text-sm">
+              <summary class="cursor-pointer text-blue-600 hover:text-blue-700">View Detailed Events (${summary.events.length})</summary>
+              <div class="mt-3 max-h-48 overflow-y-auto">
+                <table class="w-full text-xs">
+                  <thead>
+                    <tr class="bg-slate-100">
+                      <th class="text-left p-2">Time</th>
+                      <th class="text-left p-2">Event</th>
+                      <th class="text-left p-2">Section</th>
+                      <th class="text-left p-2">Duration</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${summary.events.slice(0, 20).map(event => `
+                      <tr class="border-t">
+                        <td class="p-2">${new Date(event.timestamp).toLocaleTimeString()}</td>
+                        <td class="p-2">
+                          <span class="px-2 py-1 rounded text-xs ${event.event_type === 'focus_lost' || event.event_type === 'visibility_change' ? 'bg-red-100 text-red-700' : event.event_type === 'focus_gained' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}">
+                            ${event.event_type.replace('_', ' ')}
+                          </span>
+                        </td>
+                        <td class="p-2">${event.current_section || 'N/A'}</td>
+                        <td class="p-2">${event.duration_away ? `${event.duration_away}s` : 'N/A'}</td>
+                      </tr>
+                    `).join('')}
+                  </tbody>
+                </table>
+                ${summary.events.length > 20 ? `<p class="text-xs text-slate-500 mt-2">Showing first 20 of ${summary.events.length} events</p>` : ''}
+              </div>
+            </details>
+          `;
+          container.appendChild(el);
+        });
+
+        // Add user filter functionality
+        userFilter.addEventListener('change', (e) => {
+          const selectedUser = e.target.value;
+          const summaryDivs = container.querySelectorAll('div');
+          summaryDivs.forEach(div => {
+            if (!selectedUser || div.textContent.includes(selectedUser)) {
+              div.style.display = 'block';
+            } else {
+              div.style.display = 'none';
+            }
+          });
+        });
+
+      } catch (e) {
+        console.error('loadProctoringData', e);
+        $('proctoring-summary').innerHTML = '<p class="text-red-500 text-center py-4">Error loading proctoring data</p>';
       }
     }
 
@@ -2142,7 +2515,7 @@ function renderSuggestionsForPart(data, part) {
     $('btn-logout').addEventListener('click', logout);
     $('btn-admin-logout').addEventListener('click', logout);
     $('btn-generate').addEventListener('click', generateFeedback);
-    
+
     // Part submission event listeners
     $('submit-part-a').addEventListener('click', submitPartA);
     $('submit-part-b').addEventListener('click', submitPartB);
@@ -2165,6 +2538,14 @@ function renderSuggestionsForPart(data, part) {
         hideContextModal();
       }
     });
+
+    // Proctoring Event Listeners
+    $('proctoring-warning-ok').addEventListener('click', () => {
+      $('proctoring-warning-modal').classList.add('hidden');
+    });
+
+    // Admin proctoring functionality
+    $('btn-refresh-proctoring').addEventListener('click', loadProctoringData);
 
     // Question Management Event Listeners
     $('btn-add-question').addEventListener('click', () => showQuestionModal());
@@ -2194,7 +2575,7 @@ function renderSuggestionsForPart(data, part) {
       if (!el) return;
       el.classList.remove('hidden');
       el.textContent = message;
-      try { localStorage.setItem('mf_feedback_all_status_message', message); } catch (_) {}
+      try { localStorage.setItem('mf_feedback_all_status_message', message); } catch (_) { }
     }
     function restoreGlobalFeedbackStatus() {
       const el = $('feedback-toggle-status');
@@ -2342,7 +2723,7 @@ function renderSuggestionsForPart(data, part) {
             if (lastSubmittedStep === 3 && passedParts.A && passedParts.B && passedParts.C) {
               const btn = $('btn-survey');
               if (btn) btn.classList.remove('hidden');
-              try { markAllSectionsCorrect(); } catch(_) {}
+              try { markAllSectionsCorrect(); } catch (_) { }
               alert('You have correct answer for all sections, Congratulation! Please complete the survey now!');
             }
           } else if (evData.is_correct && lvl <= 40) {
@@ -2372,7 +2753,7 @@ function renderSuggestionsForPart(data, part) {
     // Start timer consent
     $('start-timer-ok').addEventListener('click', () => {
       timersEnabled = true;
-      try { localStorage.setItem(getTimerConsentKey(), '1'); } catch(_) {}
+      try { localStorage.setItem(getTimerConsentKey(), '1'); } catch (_) { }
       $('start-timer-modal').classList.add('hidden');
       // Now that consent is given, start the timer for current step
       startStepTimer(currentStep);
@@ -2390,4 +2771,5 @@ function renderSuggestionsForPart(data, part) {
     else { $('auth-page').classList.remove('hidden'); clearAuthInputs(); }
   </script>
 </body>
+
 </html>
