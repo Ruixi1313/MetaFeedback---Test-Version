@@ -587,14 +587,14 @@
       if (!token) return;
       const body = JSON.stringify(draftPayload());
       try {
-        // 先试 POST（常见实现）
+        // Try POST first (most common implementation)
         let res = await fetch(`${API_URL}/draft/me`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
           body
         });
         if (!res.ok && res.status === 405) {
-          // 如果后端只接受 PUT，就回退到 PUT
+          // If backend only accepts PUT, fall back to PUT
           res = await fetch(`${API_URL}/draft/me`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -620,8 +620,8 @@
 
     function getAssignmentFriendlyName() {
       const a = currentContext.assignment || '';
-      if (a === 'Assignment 1 - Group 1') return 'Study Session Optimizer';
-      if (a === 'Assignment 1 - Group 1 without Meta-Feedback') return 'Divide-and-Conquer Implementation';
+      if (a === 'Assignment 1 - Group 1') return 'Problem 1: Study Session Optimizer';
+      if (a === 'Assignment 1 - Group 1 without Meta-Feedback') return 'Problem 2: Divide-and-Conquer Implementation';
       return a;
     }
 
@@ -933,7 +933,7 @@
     function hideExamModal() { const m = $('exam-modal'); if (m) m.classList.add('hidden'); }
     function examPause(reason) {
       if (!EXAM_MODE) return;
-      // 仅在学生作答界面且已开始计时时启用强制聚焦
+      // Enforce focus only when on user page and timers have started
       if (!timersEnabled || !isUserViewActive()) return;
       if (examPaused) return;
       examPaused = true;
@@ -952,6 +952,8 @@
       if (!examPaused) return;
       if (!timersEnabled || !isUserViewActive()) return;
       if (!isFullscreenActive()) return;
+      // Defensive: ensure we reflect the latest persisted assignment/domain after focus/fullscreen changes
+      try { restoreCurrentContext(); updateContextDisplay(); } catch(_) {}
       hideExamModal();
       examPaused = false;
       try { logEvent('exam_resume', currentContext.assignment, currentContext.domain, reason); } catch(_) {}
@@ -1267,9 +1269,13 @@
       } else {
         $('user-page').classList.remove('hidden');
         $('user-name').textContent = username;
-        
+        // Reset UI/state for user switch to avoid leaking previous user's data in DOM
+        resetPerUserUIState();
+
         // Restore last chosen assignment/domain for this user
         restoreCurrentContext();
+        // Update display to reflect restored assignment/domain immediately
+        updateContextDisplay();
         // Restore step from server before initial render
         await restoreStepFromServer();
         restorePassedPartsFromStorage();
@@ -1299,6 +1305,34 @@
           logEvent('view_feedback', currentContext.assignment, currentContext.domain);
         }
       }
+    }
+
+    // Clear timers, state, editors, and feedback when switching to a different user
+    function resetPerUserUIState() {
+      // Stop all timers
+      [1,2,3].forEach(s => { if (timers[s]) { clearInterval(timers[s]); timers[s] = null; } });
+      timerPauseUntil = { 1: 0, 2: 0, 3: 0 };
+      timerResumeTimeouts = { 1: null, 2: null, 3: null };
+      // Reset step and progress in memory
+      stepProgress = { partA: false, partB: false, partC: false };
+      passedParts = { A: false, B: false, C: false };
+      highestStepUnlocked = 1;
+      currentStep = 1;
+      timersEnabled = false;
+      feedbackEligibility = { enabled: false, remaining: 0 };
+      pauseFeedbackCooldownUI();
+      // Clear editors and outputs
+      const planEl = $('plan'); if (planEl) planEl.value = '';
+      const codeEl = $('code'); if (codeEl) codeEl.value = '';
+      const testsEl = $('tests'); if (testsEl) testsEl.value = '';
+      const out = $('output'); if (out) out.classList.add('hidden');
+      // Hide action buttons until eligibility is recomputed
+      const gen = $('btn-generate'); if (gen) gen.classList.add('hidden');
+      const survey = $('btn-survey'); if (survey) survey.classList.add('hidden');
+      const nextBtn = $('btn-next-question'); if (nextBtn) nextBtn.classList.add('hidden');
+      // Update UI chrome
+      updateStepDisplay();
+      updateControlsForAllSteps();
     }
 
     // Student actions

@@ -280,7 +280,7 @@ async def startup_event():
             try:
                 with engine.connect() as conn:
                     cols = conn.execute(text("PRAGMA table_info(submissions);")).fetchall()
-                    col_names = {c[1] for c in cols}  # 第二项是列名
+                    col_names = {c[1] for c in cols}  # the second element is the column name
                     if "confidence_level" not in col_names:
                         conn.execute(text("ALTER TABLE submissions ADD COLUMN confidence_level INTEGER;"))
                         print("Added 'confidence_level' column to submissions")
@@ -1324,10 +1324,10 @@ def set_confidence(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    # 0..100 夹紧
+    # Clamp confidence to 0..100
     lvl = max(0, min(100, int(payload.confidence_level)))
 
-    # 找到“当前用户 + 该 assignment + 该 domain”的最近一次提交
+    # Find the most recent submission for current user + assignment + domain
     sub = (db.query(Submission)
            .filter(Submission.username == current_user.username,
                    Submission.assignment == payload.assignment,
@@ -1341,13 +1341,14 @@ def set_confidence(
     sub.confidence_level = lvl
     db.commit()
 
-    # 可选：记录事件日志，便于分析
+    # Optional: log an event for analytics
     log_event(db, current_user.id, "submit_confidence",
               payload.assignment, payload.domain, details=str(lvl))
 
-    # 静默评估：即使前端跳过评估或服务不可用，也尽力在后端评估并写入数据库
+    # Silent evaluation: even if frontend skipped or service is unavailable,
+    # attempt a backend evaluation and persist to the database
     try:
-        # 取最近两次提交（用于识别当前评估的是哪一部分）
+        # Fetch the latest two submissions (to infer which section changed)
         recent_subs = (db.query(Submission)
                        .filter(Submission.username == current_user.username,
                                Submission.assignment == payload.assignment,
@@ -1358,7 +1359,7 @@ def set_confidence(
         sub = recent_subs[0] if recent_subs else None
         prev = recent_subs[1] if len(recent_subs) > 1 else None
         if sub is not None:
-            # 推断本次评估的部分
+            # Infer which part to evaluate this time
             def _val(x): return x or ""
             if prev is not None:
                 if _val(sub.plan) != _val(prev.plan):
@@ -1371,11 +1372,11 @@ def set_confidence(
                     part = 'C'
                     section_text = _val(sub.tests).strip()
                 else:
-                    # 无差异时按优先级回退到 C
+                    # No diff → default to C by priority
                     part = 'C'
                     section_text = _val(sub.tests).strip()
             else:
-                # 没有上一条时的启发式
+                # Heuristic when there is no previous submission
                 if sub.plan and not sub.code and not sub.tests:
                     part = 'A'; section_text = _val(sub.plan).strip()
                 elif sub.code and not sub.tests:
@@ -1383,7 +1384,7 @@ def set_confidence(
                 else:
                     part = 'C'; section_text = _val(sub.tests).strip()
 
-            # 取题目与rubric
+            # Fetch question and rubric
             question = db.query(Question).filter(
                 Question.assignment == payload.assignment,
                 Question.domain == payload.domain
@@ -1391,7 +1392,7 @@ def set_confidence(
             question_text = question.question_text if question else ""
             rubric_text = (question.rubric or "") if question else ""
 
-            # 初始化 OpenAI 客户端
+            # Initialize OpenAI client
             global client
             if client is None:
                 api_key = os.getenv("OPENAI_API_KEY")
@@ -1410,16 +1411,16 @@ def set_confidence(
                 except Exception:
                     db.rollback()
 
-            # 只有在配置了 API key 时才尝试评估；否则按 0 记录
+            # Only attempt evaluation if API key is configured; otherwise record as 0
             if client is not None:
-                # 组装与 /evaluate-correctness 相同的提示（更简化即可）
+                # Assemble a prompt similar to /evaluate-correctness (simplified)
                 if part == 'A':
                     section_name = 'DESIGN_PLAN'
                 elif part == 'B':
                     section_name = 'CODE'
                 else:
                     section_name = 'TESTS'
-                # 与 evaluate_correctness 一致的 rubric 优先宽松说明
+                # Keep rubric leniency aligned with evaluate_correctness
                 if part == 'A':
                     guidance = ("Evaluate ONLY the Design Plan against the assignment text/rubric; "
                                 "be lenient about format; return JSON with is_correct and reason.")
@@ -1450,13 +1451,12 @@ def set_confidence(
                     data = json.loads(content)
                     is_correct = bool(data.get("is_correct", False))
                     reason = str(data.get("reason", "Evaluation complete."))
-                    # 写回该 submission 的对应字段
                     _write_result_to_submission(is_correct, reason)
                 except Exception:
-                    # 评估失败：按 0 记录
+                    # Evaluation failed: record as 0
                     _write_result_to_submission(False, "auto/silent evaluation failed")
             else:
-                # 无可用评估客户端：按 0 记录
+                # No evaluation client available: record as 0
                 _write_result_to_submission(False, "auto/silent evaluation skipped")
     except Exception:
         pass
