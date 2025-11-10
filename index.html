@@ -191,7 +191,8 @@
     <div class="flex items-center gap-3">
       <button id="btn-generate" class="hidden px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">Generate AI Feedback</button>
       <span id="feedback-ready" class="hidden text-xs text-slate-500"></span>
-      <button id="btn-survey" class="hidden px-4 py-2 rounded-xl bg-purple-600 text-white hover:bg-purple-700">Complete Survey</button>
+        <button id="btn-survey" class="hidden px-4 py-2 rounded-xl bg-purple-600 text-white hover:bg-purple-700">Complete Survey</button>
+        <button id="btn-next-question" class="hidden px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">Start Next Question</button>
       </div>
 
       <section id="output" class="hidden bg-white border border-slate-200 rounded-2xl shadow p-6">
@@ -250,7 +251,7 @@
     <div id="pause-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
       <div class="bg-white rounded-2xl border border-slate-200 shadow-soft p-6 w-full max-w-md">
         <h3 class="text-2xl font-bold mb-2">Timer Paused</h3>
-        <p class="text-slate-700">You just received AI feedback. The timer for this section is paused for 2 minutes. Please read the feedback and revise your answer. The timer will resume automatically.</p>
+        <p class="text-slate-700">You just received AI feedback. The timer for this section is paused for 1 minute. Please read the feedback and revise your answer. The timer will resume automatically.</p>
         <div class="mt-6 flex justify-end gap-2">
           <button id="ok-pause" class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">OK</button>
         </div>
@@ -603,6 +604,31 @@
       domain: 'Sorting'
     };
 
+    // Persist / restore current assignment+domain (per user)
+    function getContextStorageKey() {
+      const u = (username || 'user');
+      return `mf_context_${u}`;
+    }
+    function persistCurrentContext() {
+      try {
+        localStorage.setItem(getContextStorageKey(), JSON.stringify({
+          assignment: currentContext.assignment,
+          domain: currentContext.domain
+        }));
+      } catch(_) {}
+    }
+    function restoreCurrentContext() {
+      try {
+        const raw = localStorage.getItem(getContextStorageKey());
+        if (!raw) return;
+        const obj = JSON.parse(raw);
+        if (obj && obj.assignment && obj.domain) {
+          currentContext.assignment = obj.assignment;
+          currentContext.domain = obj.domain;
+        }
+      } catch(_) {}
+    }
+
     function updateContextDisplay() {
       if (isAdmin) {
         $('current-assignment').textContent = currentContext.assignment;
@@ -919,10 +945,19 @@
         forceProceedOnConfidence = true;
         if (step === 1) {
           await submitPartA();
+          passedParts.A = true; persistPassedParts();
         } else if (step === 2) {
           await submitPartB();
+          passedParts.B = true; persistPassedParts();
         } else {
           await submitPartC();
+          passedParts.C = true; persistPassedParts();
+        }
+        // Update controls to reflect completion status even if not evaluated
+        updateControlsForAllSteps();
+        // If all three parts are submitted, reveal the survey button
+        if (stepProgress.partA && stepProgress.partB && stepProgress.partC) {
+          const btn = $('btn-survey'); if (btn) btn.classList.remove('hidden');
         }
         // Next step navigation will be controlled by confidence gating
       } catch (_) {}
@@ -1133,6 +1168,8 @@
         $('user-page').classList.remove('hidden');
         $('user-name').textContent = username;
         
+        // Restore last chosen assignment/domain for this user
+        restoreCurrentContext();
         // Restore step from server before initial render
         await restoreStepFromServer();
         restorePassedPartsFromStorage();
@@ -1149,6 +1186,8 @@
         enableStepClicks();
         // Restore last feedback (if any) for this user/assignment/domain
         restoreLastFeedbackIfAny();
+        // Ensure next-question button visibility based on latest server state
+        ensureNextQuestionVisibility();
         
         // Hide action buttons initially
         $('btn-generate').classList.add('hidden');
@@ -1543,9 +1582,9 @@
     logEvent('view_feedback', payload.assignment, payload.domain);
     await saveDraft();
     await checkFeedbackStatus();
-    // Pause the timer for 2 minutes to allow reading feedback
+    // Pause the timer for 1 minute to allow reading feedback
     if (timersEnabled) {
-      pauseCurrentStepTimerFor(2 * 60 * 1000);
+      pauseCurrentStepTimerFor(1 * 60 * 1000);
     } else {
       // Show modal info even if timers not started yet
       const m = $('pause-modal'); if (m) m.classList.remove('hidden');
@@ -1631,6 +1670,65 @@ function renderSuggestionsForPart(data, part) {
       
       hideContextModal();
       alert('✅ Context updated successfully!');
+    }
+
+    // Determine the next assignment name based on the required order
+    function getNextAssignmentName(current) {
+      if (current === 'Assignment 1 - Group 1') return 'Assignment 1 - Group 1 without Meta-Feedback';
+      return null; // no further questions defined
+    }
+
+    // Start next question: reset state and move to Part A of the next assignment
+    function startNextQuestion() {
+      const next = getNextAssignmentName(currentContext.assignment);
+      if (!next) { alert('No next question is available.'); return; }
+      // Update context
+      currentContext.assignment = next;
+      persistCurrentContext();
+      // Reset local UI state
+      stepProgress = { partA: false, partB: false, partC: false };
+      passedParts = { A: false, B: false, C: false };
+      extensionOffered = { 1: false, 2: false, 3: false };
+      extensionUsed = { 1: false, 2: false, 3: false };
+      highestStepUnlocked = 1;
+      currentStep = 1;
+      // Reset timers for new assignment (persist defaults)
+      [1,2,3].forEach(s => {
+        timeLeft[s] = STEP_LIMIT_SECONDS;
+        try { localStorage.setItem(getTimerStorageKey(s), String(STEP_LIMIT_SECONDS)); } catch(_) {}
+      });
+      // New assignment → require consent again
+      timersEnabled = false;
+      // Clear editors
+      $('plan').value = '';
+      $('code').value = '';
+      $('tests').value = '';
+      // Hide outputs and survey/next buttons
+      $('output').classList.add('hidden');
+      $('btn-survey').classList.add('hidden');
+      $('btn-next-question').classList.add('hidden');
+      // Persist and render
+      persistCurrentStep();
+      persistCurrentContext();
+      updateContextDisplay();
+      updateStepDisplay();
+      // Show consent modal
+      $('start-timer-modal').classList.remove('hidden');
+      // Log
+      try { logEvent('start_next_question', currentContext.assignment, currentContext.domain); } catch(_) {}
+    }
+
+    // Ensure Next Question button is visible when all three parts are submitted
+    function ensureNextQuestionVisibility() {
+      const btnNext = $('btn-next-question');
+      if (!btnNext) return;
+      const allSubmitted = !!(stepProgress.partA && stepProgress.partB && stepProgress.partC);
+      const next = getNextAssignmentName(currentContext.assignment);
+      if (allSubmitted && next) {
+        btnNext.classList.remove('hidden');
+      } else {
+        btnNext.classList.add('hidden');
+      }
     }
 
     async function loadUsers() {
@@ -2142,6 +2240,7 @@ function renderSuggestionsForPart(data, part) {
     $('btn-logout').addEventListener('click', logout);
     $('btn-admin-logout').addEventListener('click', logout);
     $('btn-generate').addEventListener('click', generateFeedback);
+    $('btn-next-question').addEventListener('click', startNextQuestion);
     
     // Part submission event listeners
     $('submit-part-a').addEventListener('click', submitPartA);
@@ -2150,6 +2249,10 @@ function renderSuggestionsForPart(data, part) {
     $('btn-survey').addEventListener('click', () => {
       window.open('https://forms.office.com/Pages/ResponsePage.aspx?id=gcLuqKOqrk2sm5o5i5IV54_UjzNC4lpOpZ41yDeiv7FURUJQMVMzRUVDTDZOVUIyMDdPUFY5T0g1MS4u', '_blank');
       logEvent('survey_click', currentContext.assignment, currentContext.domain);
+      // After survey, allow starting the next question if available
+      const next = getNextAssignmentName(currentContext.assignment);
+      const btnNext = $('btn-next-question');
+      if (next && btnNext) btnNext.classList.remove('hidden');
     });
 
     // Context Management Event Listeners
@@ -2321,12 +2424,24 @@ function renderSuggestionsForPart(data, part) {
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
           body: JSON.stringify(evalPayload)
         });
-        const evData = await ev.json();
+        // Be robust to non-JSON (e.g., 500 Internal Server Error)
+        const rawEv = await ev.text();
+        // If evaluator is unavailable (non-200), do not block; proceed
+        if (!ev.ok) {
+          $('conf-submit').disabled = false;
+          $('conf-submit').textContent = oldTxt;
+          hideConfidenceModal();
+          moveToNextStep();
+          return;
+        }
+        let evData;
+        try { evData = JSON.parse(rawEv || '{}'); }
+        catch { evData = null; }
         $('conf-submit').disabled = false;
         $('conf-submit').textContent = oldTxt;
         hideConfidenceModal();
 
-        if (ev.ok && evData && typeof evData.is_correct !== 'undefined') {
+        if (evData && typeof evData.is_correct !== 'undefined') {
           // Gate: must be correct AND confidence > 40% to proceed
           if (evData.is_correct && lvl > 40) {
             if (lastSubmittedStep === 1) passedParts.A = true;

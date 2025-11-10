@@ -489,45 +489,15 @@ class PartSubmissionResponse(BaseModel):
 
 # LLM prompts
 SYSTEM_PROMPT = """
-You are an educational meta-feedback assistant for university-level computing assignments.
-Your goal is to help students understand and improve their reasoning, not to grade or correct answers.
-Use the **CCR framework (Condition → Consequence → Refinement)** to provide **process-oriented feedback** that promotes conceptual understanding and self-revision.
+You are an educational meta-feedback assistant.
+Goal: give students concrete, immediately actionable guidance that improves their Plan, Code and Tests.
 
-Condition:
-Identify specific reasoning or structural gaps (for example: missing loop logic, unclear complexity reasoning, missing edge cases).
-Explain in 2-3 sentences why this gap matters for the student's understanding or the algorithm's correctness.
-
-Consequence:
-Explain what misunderstanding or confusion this gap suggests.
-Describe in 2-3 sentences how this could affect their reasoning, algorithm design, or test quality.
-
-Refinement:
-Give **multiple explicit next steps** to guide the student toward meaningful revision.
-
-Each feedback section (Plan, Code, Tests) must contain **2-3 bullet points**.  
-Each bullet point must include **three parts**:
-1. **Action** — Tell the student exactly what to add, revise, or illustrate next (use verbs like Add, Explain, Compare, Rewrite, Illustrate).  
-2. **Why** — Explain why that change matters for understanding or correctness.  
-3. **Reflection** — End with a reflective question that helps the student verify or extend their reasoning.
-
-Example format for each feedback item:
-- **Action:** Add one explanation of why reverse-sorted input leads to the worst-case behavior in Insertion Sort.  
-  **Why:** This connects your algorithm choice to the data characteristics and shows your understanding of time complexity.  
-  **Reflection:** How could you rephrase your reasoning to highlight the link between input order and performance?
-
-Special Rules for Code Feedback:
-- Identify the missing structure (e.g., inner loop, recursion, base case, or variable initialization).  
-- Give **2-3 specific revision steps** instead of one.  
-- Each step must include Action → Why → Reflection.  
-- Use clear conceptual language, not code.
-
-Tone and Style:
-- Start each section with one short positive observation.
-- Keep the tone supportive, specific, and reflective.
-- Avoid vague words like “consider” or “think about”.
-- Prefer directive verbs: Add, Explain, Illustrate, Rewrite, Clarify.
-
-Each feedback section (Plan, Code, Tests) must include at least one explicit Action step that tells the student exactly what to add or write next, followed by a short explanation of why it matters and one reflective question for self-check.
+Rules:
+- Be specific and prescriptive; avoid vague words like "consider" or "maybe".
+- Use imperative verbs: Add, Fix, Explain, Show, Rename, Split, Cover.
+- Each suggestion should contain: Action (what to change), Example (tiny snippet or phrasing), Why (benefit/bug avoided), Check (a quick self‑test).
+- Keep tone supportive and concise; do not restate the assignment.
+- Output must be helpful even if student work is short or incomplete.
 """
 
 USER_TEMPLATE = """Domain: {domain}
@@ -544,23 +514,20 @@ USER_TEMPLATE = """Domain: {domain}
 [Tests]
 {tests}
 
-Analyze the student's work using the CCR (Condition-Consequence-Refinement) framework from your system role.
-
-For each section (Plan, Code, Tests):
-- Identify key gaps or unclear logic (Condition).
-- Explain what misunderstanding or missing concept this might reveal, and help the student reorganize their reasoning (Consequence).
-- Offer 2-3 multi-sentence suggestions that guide deeper understanding, not just fixes (Refinement).
-
-Each suggestion should be **1-2 concise sentences**, clear and supportive.  
-Use specific technical terms (e.g., “pivot”, “recursion depth”) instead of vague language.  
-Start briefly with a positive note, then give one actionable improvement.
-Keep feedback short and focused — aim for under 80 words per suggestion.
+Write meta‑feedback that is concrete and immediately actionable.
+For each of Plan, Code, and Tests, produce 3–5 short suggestions. Each suggestion must:
+- Start with a strong verb (Add/Fix/Explain/Show).
+- Specify exactly what to change or write (point to concept/section/line if relevant).
+- Include a tiny example/template (1 sentence or 1–2 lines of pseudo/code if helpful).
+- State briefly why this change matters or what bug/risk it removes.
+- End with a quick self‑check question.
+Avoid vague language. Keep each suggestion ≤ 3 sentences.
 
 Return ONLY valid JSON with this structure:
 {{
-  "plan_suggestions": ["detailed feedback strings (3-4 sentences each)"],
-  "code_suggestions": ["detailed feedback strings (3-5 sentences each)"],
-  "test_suggestions": ["detailed feedback strings (2-4 sentences each)"]
+  "plan_suggestions": ["string"],
+  "code_suggestions": ["string"],
+  "test_suggestions": ["string"]
 }}
 
 """
@@ -980,56 +947,50 @@ def evaluate_correctness(payload: EvaluateRequest, current_user: User = Depends(
         client = OpenAI(api_key=api_key)
 
     # Build evaluation prompt for JSON Boolean verdict
-    # Section-specific framing (rubric-aware, generic across questions)
+    # Section-specific framing (rubric-first, align strictly to admin question)
     if payload.part == 'A':
         section_name = 'DESIGN_PLAN'
         section_text = (payload.plan or '').strip()
         if rubric_text:
             guidance = (
-                "Evaluate ONLY the Design Plan against the assignment and the following rubric: "
+                "Evaluate ONLY the Design Plan against the following rubric; do not add extra criteria. "
+                "Treat listing of detailed key steps/phases and enumerating edge cases/assumptions as OPTIONAL (do not require them for a correct verdict). "
                 f"\n{rubric_text}\n"
-                "The plan must explicitly address the key requirements implied by the question and rubric (approach/method and why it's appropriate, expected complexity or performance characteristics relevant to the scenario, main steps/phases, and important edge cases/assumptions). "
-                "If critical elements are missing or only vaguely implied, set is_correct=false and briefly list what is missing in reason."
+                "Mark is_correct=true if the core approach/method requested by the question is present with a brief rationale. "
+                "Only set is_correct=false when the core requested item(s) are clearly missing; be lenient about format and optional details."
             )
         else:
             guidance = (
-                "Evaluate ONLY the Design Plan. The plan should clearly include: "
-                "(1) the intended approach/method and why it's appropriate for this question; "
-                "(2) expected time/space behavior or performance considerations relevant to the scenario; "
-                "(3) the key steps/phases of the solution; "
-                "(4) important edge cases or assumptions. "
-                "If any of these elements are missing or too vague to act on, set is_correct=false and briefly list what is missing in reason."
+                "Evaluate ONLY against explicit requirements stated in the assignment question text; do not require items that are not explicitly requested. "
+                "Be lenient about format/wording; only mark false when clear required items are absent."
             )
     elif payload.part == 'B':
         section_name = 'CODE'
         section_text = (payload.code or '').strip()
         if rubric_text:
             guidance = (
-                "Evaluate ONLY the Code for correctness relative to the assignment and rubric: "
+                "Evaluate ONLY the Code for correctness relative to the rubric and required behaviors; do not add extra constraints: "
                 f"\n{rubric_text}\n"
-                "Focus on whether the implementation satisfies the required behavior and handles key edge cases. "
-                "Be LENIENT about minor pseudocode/syntax issues or trivial off-by-one indexing mistakes when the algorithmic intent is clearly correct; in such cases set is_correct=true and explain briefly."
+                "Focus on whether required behaviors are implemented; if behavior is present with minor/pseudocode issues, set is_correct=true and explain briefly."
             )
         else:
             guidance = (
-                "Evaluate ONLY the Code for correctness relative to the assignment question. "
-                "Consider edge cases and overall algorithmic/logic soundness, but ignore plan and tests. "
-                "Be LENIENT about minor pseudocode/syntax issues or trivial off-by-one indexing mistakes when the algorithmic intent is clearly correct; in such cases set is_correct=true and explain briefly."
+                "Evaluate ONLY the Code against behaviors explicitly required in the assignment text. Ignore unstated extras. "
+                "Be LENIENT about minor pseudocode/syntax issues or trivial off-by-one mistakes when the algorithmic intent is correct; in such cases set is_correct=true and explain briefly."
             )
     else:
         section_name = 'TESTS'
         section_text = (payload.tests or '').strip()
         if rubric_text:
             guidance = (
-                "Evaluate ONLY the Tests for adequacy and coverage against the assignment and rubric: "
+                "Evaluate ONLY the Tests against rubric-specified coverage; do not require cases not listed by rubric: "
                 f"\n{rubric_text}\n"
-                "Judge whether typical cases and important edge cases are covered well enough to detect likely defects. "
-                "Be LENIENT if coverage is reasonable even if naming/formatting is imperfect; in such cases mark is_correct=true."
+                "If rubric lists concrete cases, require those; otherwise judge reasonable coverage and mark true if core cases are present (be lenient about naming/formatting)."
             )
         else:
             guidance = (
-                "Evaluate ONLY the Tests for adequacy and coverage of typical and edge cases. "
-                "Ignore plan and code details except as needed to judge coverage. Be LENIENT if the test set reasonably covers core and edge cases even if naming/formatting is imperfect; in such cases mark is_correct=true."
+                "Evaluate ONLY the Tests versus explicitly requested coverage in the assignment text; do not require unstated cases. "
+                "Be LENIENT if coverage is reasonably aligned with the question; mark true even if naming/formatting is imperfect."
             )
 
     eval_user_msg = (
