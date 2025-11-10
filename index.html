@@ -740,8 +740,17 @@
       if (genBtn) {
         const curr = getCurrentPartLetter();
         const isCompleted = !!passedParts[curr];
+        const isSecondAssignment = currentContext.assignment === 'Assignment 1 - Group 1 without Meta-Feedback';
         const enable = !isCompleted; // Only enable on current step since button acts on current step
         if (currentStep === 1 || currentStep === 2 || currentStep === 3) {
+          if (isSecondAssignment) {
+            genBtn.disabled = true;
+            genBtn.classList.add('hidden');
+            if (readyLabel) readyLabel.classList.add('hidden');
+            // stop cooldown updates for this assignment
+            pauseFeedbackCooldownUI();
+            return;
+          }
           if (enable) {
             genBtn.disabled = false;
             genBtn.classList.remove('bg-slate-300','text-white','cursor-not-allowed');
@@ -1404,7 +1413,29 @@
         const data = await res.json();
         feedbackEligibility.enabled = !!data.enabled;
         feedbackEligibility.remaining = Math.max(0, (data.max_feedback || 0) - (data.feedback_count || 0));
-        
+        // Assignment-specific override:
+        // - Assignment 1 - Group 1: always allow feedback (frontend override)
+        // - Assignment 1 - Group 1 without Meta-Feedback: always disable/hide
+        const isFirstAssignment = currentContext.assignment === 'Assignment 1 - Group 1';
+        const isSecondAssignment = currentContext.assignment === 'Assignment 1 - Group 1 without Meta-Feedback';
+        if (isSecondAssignment) {
+          $('btn-generate').classList.add('hidden');
+          $('feedback-ready').classList.add('hidden');
+          // Stop any running cooldown ticker to avoid stale label updates
+          pauseFeedbackCooldownUI();
+          return;
+        }
+        if (isFirstAssignment) {
+          // Force show and enable regardless of backend toggle
+          $('btn-generate').classList.remove('hidden');
+          $('btn-generate').classList.remove('bg-slate-300','text-white','cursor-not-allowed');
+          $('btn-generate').classList.add('bg-emerald-600');
+          $('btn-generate').disabled = false;
+          $('btn-generate').textContent = 'Generate AI Feedback';
+          // Keep cooldown behavior if timers enabled
+          if (timersEnabled) setupFeedbackCooldownIfNeeded();
+          return;
+        }
         if (data.enabled) {
           // Start 4-minute cooldown only after user consents to start timers
           if (timersEnabled) {
