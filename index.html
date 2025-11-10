@@ -257,6 +257,16 @@
         </div>
       </div>
     </div>
+    <!-- Exam Mode Pause Modal -->
+    <div id="exam-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-soft p-6 w-full max-w-md">
+        <h3 class="text-2xl font-bold mb-2">Focus Required</h3>
+        <p class="text-slate-700">Timer is paused. Please return to fullscreen and keep this tab in focus to continue.</p>
+        <div class="mt-6 flex justify-end gap-2">
+          <button id="exam-resume" class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">Return to Fullscreen</button>
+        </div>
+      </div>
+    </div>
   
   <!-- Admin -->
   <div id="admin-page" class="hidden p-6 md:p-10 mx-auto max-w-7xl space-y-6">
@@ -471,6 +481,7 @@
       : window.location.origin.replace(/:\d+$/, ':8000');
     const $ = (id) => document.getElementById(id);
     const li = (txt) => { const el = document.createElement('li'); el.textContent = txt; return el; };
+    const EXAM_MODE = true; // enable fullscreen/focus enforcement
     
     // HTML escaping function to prevent XSS and display issues
     function escapeHtml(text) {
@@ -897,6 +908,55 @@
       }, Math.max(0, ms | 0));
     }
 
+    // Exam-mode pause/resume helpers
+    let examPaused = false;
+    function isFullscreenActive() { return !!document.fullscreenElement; }
+    function isUserViewActive() {
+      const up = $('user-page');
+      return up && !up.classList.contains('hidden');
+    }
+    function showExamModal() { const m = $('exam-modal'); if (m) m.classList.remove('hidden'); }
+    function hideExamModal() { const m = $('exam-modal'); if (m) m.classList.add('hidden'); }
+    function examPause(reason) {
+      if (!EXAM_MODE) return;
+      // 仅在学生作答界面且已开始计时时启用强制聚焦
+      if (!timersEnabled || !isUserViewActive()) return;
+      if (examPaused) return;
+      examPaused = true;
+      try { logEvent('exam_pause', currentContext.assignment, currentContext.domain, reason); } catch(_) {}
+      // stop current step timer
+      if (timers[currentStep]) { clearInterval(timers[currentStep]); timers[currentStep] = null; }
+      showExamModal();
+    }
+    function examResume(reason) {
+      if (!EXAM_MODE) return;
+      if (!examPaused) return;
+      if (!timersEnabled || !isUserViewActive()) return;
+      if (!isFullscreenActive()) return;
+      hideExamModal();
+      examPaused = false;
+      try { logEvent('exam_resume', currentContext.assignment, currentContext.domain, reason); } catch(_) {}
+      startStepTimer(currentStep);
+    }
+
+    // Try entering fullscreen as early as possible (browsers may require a user gesture)
+    function tryEnterFullscreen() {
+      if (!EXAM_MODE) return;
+      if (isFullscreenActive()) return;
+      try { document.documentElement.requestFullscreen(); } catch(_) {}
+    }
+    function setupFirstInteractionFullscreen() {
+      if (!EXAM_MODE) return;
+      const once = (e) => {
+        if (!isFullscreenActive()) {
+          try { document.documentElement.requestFullscreen(); } catch(_) {}
+        }
+        document.removeEventListener('pointerdown', once);
+        document.removeEventListener('keydown', once);
+      };
+      document.addEventListener('pointerdown', once, { once: true });
+      document.addEventListener('keydown', once, { once: true });
+    }
     // Extension and auto-submit flow
     let extensionOffered = { 1: false, 2: false, 3: false }; // modal offered at most once per part
     let extensionUsed = { 1: false, 2: false, 3: false };    // user accepted 3-minute extension
@@ -2402,6 +2462,11 @@ function renderSuggestionsForPart(data, part) {
     $('ok-pause').addEventListener('click', () => {
       const m = $('pause-modal'); if (m) m.classList.add('hidden');
     });
+    // Exam modal resume
+    $('exam-resume').addEventListener('click', async () => {
+      try { await document.documentElement.requestFullscreen(); } catch(_) {}
+      examResume('resume_button');
+    });
 
     // Confidence modal interactions
     function showConfidenceModal() {
@@ -2520,11 +2585,29 @@ function renderSuggestionsForPart(data, part) {
       timersEnabled = true;
       try { localStorage.setItem(getTimerConsentKey(), '1'); } catch(_) {}
       $('start-timer-modal').classList.add('hidden');
+      // In exam mode, request fullscreen first
+      if (EXAM_MODE && !isFullscreenActive()) {
+        try { document.documentElement.requestFullscreen(); } catch(_) {}
+      }
       // Now that consent is given, start the timer for current step
       startStepTimer(currentStep);
       // Start the feedback cooldown now that consent is granted
       setupFeedbackCooldownIfNeeded(currentStep);
     });
+
+    // Exam mode: visibility / focus / fullscreen change handlers
+    if (EXAM_MODE) {
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) examPause('tab_hidden');
+        else if (isFullscreenActive()) examResume('tab_visible');
+      });
+      window.addEventListener('blur', () => examPause('window_blur'));
+      window.addEventListener('focus', () => { if (isFullscreenActive()) examResume('window_focus'); });
+      document.addEventListener('fullscreenchange', () => {
+        if (isFullscreenActive()) examResume('enter_fullscreen');
+        else examPause('exit_fullscreen');
+      });
+    }
 
 
     // Enter shortcuts
@@ -2534,6 +2617,9 @@ function renderSuggestionsForPart(data, part) {
     // Init
     if (token) { showDashboard(); }
     else { $('auth-page').classList.remove('hidden'); clearAuthInputs(); }
+    // Attempt fullscreen on load and ensure first interaction triggers it (subject to browser gesture policies)
+    tryEnterFullscreen();
+    setupFirstInteractionFullscreen();
   </script>
 </body>
 </html>
