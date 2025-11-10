@@ -65,6 +65,7 @@
       <div>
         <h1 class="text-3xl md:text-4xl font-bold tracking-tight">Meta-Feedback — Algorithms</h1>
         <p class="text-slate-600 mt-2">Welcome, <span id="user-name" class="font-semibold"></span></p>
+        <p class="text-slate-500 mt-1" id="assignment-friendly"></p>
       </div>
       <button id="btn-logout" class="px-4 py-2 rounded-xl border hover:bg-slate-50">Logout</button>
     </header>
@@ -215,9 +216,11 @@
           </div>
         </div>
       </section>
-      
-  
-      
+      <!-- Toast -->
+      <div id="toast" class="hidden fixed top-4 left-1/2 -translate-x-1/2 z-[60]">
+        <div id="toast-inner" class="px-4 py-2 rounded-lg shadow bg-slate-800 text-white text-sm"></div>
+      </div>
+
       <!-- Success Modal -->
     <div id="success-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
       <div class="bg-white rounded-2xl border border-slate-200 shadow-soft p-6 w-full max-w-md">
@@ -615,6 +618,13 @@
       domain: 'Sorting'
     };
 
+    function getAssignmentFriendlyName() {
+      const a = currentContext.assignment || '';
+      if (a === 'Assignment 1 - Group 1') return 'Study Session Optimizer';
+      if (a === 'Assignment 1 - Group 1 without Meta-Feedback') return 'Divide-and-Conquer Implementation';
+      return a;
+    }
+
     // Persist / restore current assignment+domain (per user)
     function getContextStorageKey() {
       const u = (username || 'user');
@@ -645,6 +655,8 @@
         $('current-assignment').textContent = currentContext.assignment;
         $('current-domain').textContent = currentContext.domain;
       }
+      const af = $('assignment-friendly');
+      if (af) af.textContent = getAssignmentFriendlyName();
     }
 
     // Step management functions
@@ -915,6 +927,8 @@
       const up = $('user-page');
       return up && !up.classList.contains('hidden');
     }
+    // Do not log the next pause event (used for deliberate actions like opening Survey)
+    let examSkipNextPauseLog = false;
     function showExamModal() { const m = $('exam-modal'); if (m) m.classList.remove('hidden'); }
     function hideExamModal() { const m = $('exam-modal'); if (m) m.classList.add('hidden'); }
     function examPause(reason) {
@@ -923,7 +937,12 @@
       if (!timersEnabled || !isUserViewActive()) return;
       if (examPaused) return;
       examPaused = true;
-      try { logEvent('exam_pause', currentContext.assignment, currentContext.domain, reason); } catch(_) {}
+      if (!examSkipNextPauseLog) {
+        try { logEvent('exam_pause', currentContext.assignment, currentContext.domain, reason); } catch(_) {}
+      } else {
+        // reset the suppression flag after skipping one pause log
+        examSkipNextPauseLog = false;
+      }
       // stop current step timer
       if (timers[currentStep]) { clearInterval(timers[currentStep]); timers[currentStep] = null; }
       showExamModal();
@@ -956,6 +975,18 @@
       };
       document.addEventListener('pointerdown', once, { once: true });
       document.addEventListener('keydown', once, { once: true });
+    }
+
+    // Toast helpers
+    let toastTimer = null;
+    function showToast(message, type = 'info', ms = 1800) {
+      const el = $('toast'); const inner = $('toast-inner');
+      if (!el || !inner) return;
+      inner.textContent = message;
+      inner.className = 'px-4 py-2 rounded-lg shadow text-sm ' + (type === 'error' ? 'bg-red-600 text-white' : type === 'success' ? 'bg-emerald-600 text-white' : 'bg-slate-800 text-white');
+      el.classList.remove('hidden');
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { el.classList.add('hidden'); }, ms);
     }
     // Extension and auto-submit flow
     let extensionOffered = { 1: false, 2: false, 3: false }; // modal offered at most once per part
@@ -1199,7 +1230,7 @@
         $('login-form').classList.remove('hidden');
         $('auth-error').classList.add('hidden');
         // Optional: notify user
-        alert('✅ Account created. Please sign in.');
+        showToast('✅ Account created. Please sign in.', 'success', 2200);
       } catch (e) {
         $('auth-error').textContent = e.message;
         $('auth-error').classList.remove('hidden');
@@ -1255,8 +1286,6 @@
         enableStepClicks();
         // Restore last feedback (if any) for this user/assignment/domain
         restoreLastFeedbackIfAny();
-        // Ensure next-question button visibility based on latest server state
-        ensureNextQuestionVisibility();
         
         // Hide action buttons initially
         $('btn-generate').classList.add('hidden');
@@ -1298,7 +1327,7 @@
       const plan = $('plan').value.trim();
       
       if (!plan) {
-        alert('❌ Please write your design plan before submitting Part A.');
+        showToast('❌ Please write your design plan before submitting Part A.', 'error', 2200);
         return;
       }
 
@@ -1321,7 +1350,7 @@
 
         stepProgress.partA = true;
         markSubmitted(1);
-        alert('✅ Part A submitted successfully!');
+        showToast('✅ Part A submitted successfully!', 'success');
         lastSubmittedStep = 1;
         showConfidenceModal();
         
@@ -1329,7 +1358,7 @@
         logEvent('submit_part_a', currentContext.assignment, currentContext.domain);
         
       } catch (e) {
-        alert(e.message);
+        showToast(e.message || 'Submit Part A failed', 'error', 2200);
         console.error('Part A submission failed:', e);
       }
     }
@@ -1338,7 +1367,7 @@
       const code = $('code').value.trim();
       
       if (!code) {
-        alert('❌ Please write your code before submitting Part B.');
+        showToast('❌ Please write your code before submitting Part B.', 'error', 2200);
         return;
       }
 
@@ -1361,7 +1390,7 @@
 
         stepProgress.partB = true;
         markSubmitted(2);
-        alert('✅ Part B submitted successfully!');
+        showToast('✅ Part B submitted successfully!', 'success');
         lastSubmittedStep = 2;
         showConfidenceModal();
         
@@ -1369,7 +1398,7 @@
         logEvent('submit_part_b', currentContext.assignment, currentContext.domain);
         
       } catch (e) {
-        alert(e.message);
+        showToast(e.message || 'Submit Part B failed', 'error', 2200);
         console.error('Part B submission failed:', e);
       }
     }
@@ -1378,7 +1407,7 @@
       const tests = $('tests').value.trim();
       
       if (!tests) {
-        alert('❌ Please write your tests before submitting Part C.');
+        showToast('❌ Please write your tests before submitting Part C.', 'error', 2200);
         return;
       }
 
@@ -1401,7 +1430,7 @@
 
         stepProgress.partC = true;
         markSubmitted(3);
-        alert('✅ Part C submitted successfully!');
+        showToast('✅ Part C submitted successfully!', 'success');
         
         // Show generate feedback button
         $('btn-generate').classList.remove('hidden');
@@ -1412,7 +1441,7 @@
         logEvent('submit_part_c', currentContext.assignment, currentContext.domain);
         
       } catch (e) {
-        alert(e.message);
+        showToast(e.message || 'Submit Part C failed', 'error', 2200);
         console.error('Part C submission failed:', e);
       }
     }
@@ -1420,7 +1449,7 @@
     async function submitAssignment() {
       // Only allow student users to submit assignments
       if (username === 'admin') {
-        alert('Admin users cannot submit assignments. Please log in as a student.');
+        showToast('Admin users cannot submit assignments. Please log in as a student.', 'error', 2200);
         return;
       }
       
@@ -1434,7 +1463,7 @@
       
       // Validate required fields
       if (!payload.plan || !payload.code || !payload.tests) {
-        alert('❌ Please fill in all required fields before submitting.');
+        showToast('❌ Please fill in all required fields before submitting.', 'error', 2200);
         return;
       }
       
@@ -1450,7 +1479,7 @@
         
         
         // Show success message
-        alert('✅ Submission Successful!\n\nYour assignment has been submitted.');
+        showToast('✅ Submission Successful! Your assignment has been submitted.', 'success', 2200);
         
         // Check if this is the user's first submission
         const isFirstSubmission = await checkIfFirstSubmission();
@@ -1459,7 +1488,7 @@
         
         await checkFeedbackStatus();
       } catch (e) {
-        alert('❌ ' + e.message);
+        showToast('❌ ' + (e.message || 'Submit failed'), 'error', 2200);
       }
     }
 
@@ -1651,13 +1680,13 @@
     try {
       data = JSON.parse(raw);
     } catch {
-      alert('Analyze failed (non-JSON response):\n' + raw.slice(0, 200));
+      showToast('Analyze failed (non-JSON response)', 'error', 2200);
       return;
     }
 
     if (!res.ok) {
       // backend should send {detail: "..."} or {error, detail}
-      alert('Analyze failed: ' + (data.detail || data.error || 'Unknown'));
+      showToast('Analyze failed: ' + (data.detail || data.error || 'Unknown'), 'error', 2200);
       return;
     }
 
@@ -1683,7 +1712,7 @@
     }
 
   } catch (e) {
-    alert('❌ ' + (e.message || e));
+    showToast('❌ ' + (e.message || e), 'error', 2200);
   } finally {
     $('btn-generate').disabled = false;
     $('btn-generate').textContent = 'Get Meta-Feedback Again';
@@ -1748,7 +1777,7 @@ function renderSuggestionsForPart(data, part) {
       const domain = $('context-domain').value;
 
       if (!assignment || !domain) {
-        alert('Please select both assignment and domain');
+        showToast('Please select both assignment and domain', 'error', 2200);
         return;
       }
 
@@ -1760,7 +1789,7 @@ function renderSuggestionsForPart(data, part) {
       updateContextDisplay();
       
       hideContextModal();
-      alert('✅ Context updated successfully!');
+      showToast('✅ Context updated successfully!', 'success', 2200);
     }
 
     // Determine the next assignment name based on the required order
@@ -1772,7 +1801,7 @@ function renderSuggestionsForPart(data, part) {
     // Start next question: reset state and move to Part A of the next assignment
     function startNextQuestion() {
       const next = getNextAssignmentName(currentContext.assignment);
-      if (!next) { alert('No next question is available.'); return; }
+      if (!next) { showToast('No next question is available.', 'info', 2000); return; }
       // Update context
       currentContext.assignment = next;
       persistCurrentContext();
@@ -2000,7 +2029,7 @@ function renderSuggestionsForPart(data, part) {
         }
       } catch (e) {
         console.error('loadQuestionForEdit', e);
-        alert('Failed to load question data');
+        showToast('Failed to load question data', 'error', 2200);
       }
     }
 
@@ -2011,7 +2040,7 @@ function renderSuggestionsForPart(data, part) {
       const rubric = $('question-rubric').value;
 
       if (!assignment || !domain || !questionText) {
-        alert('Please fill in all required fields');
+        showToast('Please fill in all required fields', 'error', 2200);
         return;
       }
 
@@ -2046,7 +2075,7 @@ function renderSuggestionsForPart(data, part) {
         hideQuestionModal();
         await loadQuestions();
       } catch (e) {
-        alert(e.message);
+        showToast(e.message || 'Save question failed', 'error', 2200);
       }
     }
 
@@ -2066,7 +2095,7 @@ function renderSuggestionsForPart(data, part) {
 
         await loadQuestions();
       } catch (e) {
-        alert(e.message);
+        showToast(e.message || 'Delete question failed', 'error', 2200);
       }
     }
 
@@ -2089,12 +2118,12 @@ function renderSuggestionsForPart(data, part) {
           throw new Error(err.detail || 'Failed to delete user');
         }
 
-        alert('✅ User deleted successfully!');
+        showToast('✅ User deleted successfully!', 'success', 2200);
         await loadUsers();
         await loadSubmissions();
         await loadConfidenceLevels();
       } catch (e) {
-        alert('❌ ' + e.message);
+        showToast('❌ ' + (e.message || 'Delete user failed'), 'error', 2200);
       }
     }
 
@@ -2113,9 +2142,9 @@ function renderSuggestionsForPart(data, part) {
         }
 
         const data = await res.json();
-        alert(`✅ Password reset successfully!\n\nUsername: ${username}\nTemporary Password: ${data.temporary_password}\n\n⚠️ Share this password with the user securely.`);
+        showToast(`✅ Password reset for ${username}. Temporary password generated.`, 'success', 2600);
       } catch (e) {
-        alert('❌ ' + e.message);
+        showToast('❌ ' + (e.message || 'Reset password failed'), 'error', 2200);
       }
     }
 
@@ -2133,11 +2162,11 @@ function renderSuggestionsForPart(data, part) {
           throw new Error(err.detail || 'Failed to delete submission');
         }
 
-        alert('✅ Submission deleted successfully!');
+        showToast('✅ Submission deleted successfully!', 'success', 2200);
         await loadSubmissions();
         await loadConfidenceLevels();
       } catch (e) {
-        alert('❌ ' + e.message);
+        showToast('❌ ' + (e.message || 'Delete submission failed'), 'error', 2200);
       }
     }
     
@@ -2156,11 +2185,11 @@ function renderSuggestionsForPart(data, part) {
         }
 
         const result = await res.json();
-        alert(`✅ ${result.message}`);
+        showToast(`✅ ${result.message}`, 'success', 2200);
         await loadSubmissions();
         await loadConfidenceLevels();
       } catch (e) {
-        alert('❌ ' + e.message);
+        showToast('❌ ' + (e.message || 'Bulk delete failed'), 'error', 2200);
       }
     }
 
@@ -2272,7 +2301,7 @@ function renderSuggestionsForPart(data, part) {
         await loadConfidenceLevels();
       } catch (e) {
         console.error('Error toggling feedback:', e);
-        alert('❌ Failed to update feedback status: ' + e.message);
+        showToast('❌ Failed to update feedback status: ' + e.message, 'error', 2200);
         // Refresh to reset the checkbox state
         await loadConfidenceLevels();
       }
@@ -2338,6 +2367,8 @@ function renderSuggestionsForPart(data, part) {
     $('submit-part-b').addEventListener('click', submitPartB);
     $('submit-part-c').addEventListener('click', submitPartC);
     $('btn-survey').addEventListener('click', () => {
+      // Do not record the next pause caused by opening the external survey
+      examSkipNextPauseLog = true;
       window.open('https://forms.office.com/Pages/ResponsePage.aspx?id=gcLuqKOqrk2sm5o5i5IV54_UjzNC4lpOpZ41yDeiv7FURUJQMVMzRUVDTDZOVUIyMDdPUFY5T0g1MS4u', '_blank');
       logEvent('survey_click', currentContext.assignment, currentContext.domain);
       // After survey, allow starting the next question if available
@@ -2554,25 +2585,25 @@ function renderSuggestionsForPart(data, part) {
               const btn = $('btn-survey');
               if (btn) btn.classList.remove('hidden');
               try { markAllSectionsCorrect(); } catch(_) {}
-              alert('You have correct answer for all sections, Congratulation! Please complete the survey now!');
+            showToast('🎉 All sections correct! Please complete the survey now!', 'success', 2600);
             }
           } else if (evData.is_correct && lvl <= 40) {
-            alert('Meta-Feedback will be generated automatically for you, please reflect on it and build confidence before proceeding to the next section.');
+            showToast('Meta-Feedback will be generated automatically. Reflect and build confidence.', 'info', 2600);
             if (feedbackEligibility.enabled && feedbackEligibility.remaining > 0) {
               await generateFeedback();
             }
             if (lastSubmittedStep) { currentStep = lastSubmittedStep; updateStepDisplay(); }
           } else {
-            alert('❌ Your response appears incorrect or incomplete. Please revise before continuing.\n\nReason: ' + (evData.reason || 'Needs improvement.'));
+            showToast('❌ Incorrect or incomplete. Please revise: ' + (evData.reason || 'Needs improvement.'), 'error', 3000);
             if (lastSubmittedStep) { currentStep = lastSubmittedStep; updateStepDisplay(); }
           }
         } else {
           // If evaluation fails, do not block; simply notify
-          alert('⚠️ Confidence saved, but automatic evaluation failed. You may continue.');
+          showToast('⚠️ Confidence saved, evaluator unavailable. You may continue.', 'info', 2600);
           moveToNextStep();
         }
       } catch (e) {
-        alert('❌ ' + (e.message || e));
+        showToast('❌ ' + (e.message || 'Confidence submission failed'), 'error', 2600);
       }
     }
     $('conf-submit').addEventListener('click', submitConfidenceLevel);
