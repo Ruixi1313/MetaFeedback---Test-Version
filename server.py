@@ -1345,6 +1345,122 @@ def set_confidence(
     log_event(db, current_user.id, "submit_confidence",
               payload.assignment, payload.domain, details=str(lvl))
 
+    # 静默评估：即使前端跳过评估或服务不可用，也尽力在后端评估并写入数据库
+    try:
+        # 取最近两次提交（用于识别当前评估的是哪一部分）
+        recent_subs = (db.query(Submission)
+                       .filter(Submission.username == current_user.username,
+                               Submission.assignment == payload.assignment,
+                               Submission.domain == payload.domain)
+                       .order_by(Submission.timestamp.desc())
+                       .limit(2)
+                       .all())
+        sub = recent_subs[0] if recent_subs else None
+        prev = recent_subs[1] if len(recent_subs) > 1 else None
+        if sub is not None:
+            # 推断本次评估的部分
+            def _val(x): return x or ""
+            if prev is not None:
+                if _val(sub.plan) != _val(prev.plan):
+                    part = 'A'
+                    section_text = _val(sub.plan).strip()
+                elif _val(sub.code) != _val(prev.code):
+                    part = 'B'
+                    section_text = _val(sub.code).strip()
+                elif _val(sub.tests) != _val(prev.tests):
+                    part = 'C'
+                    section_text = _val(sub.tests).strip()
+                else:
+                    # 无差异时按优先级回退到 C
+                    part = 'C'
+                    section_text = _val(sub.tests).strip()
+            else:
+                # 没有上一条时的启发式
+                if sub.plan and not sub.code and not sub.tests:
+                    part = 'A'; section_text = _val(sub.plan).strip()
+                elif sub.code and not sub.tests:
+                    part = 'B'; section_text = _val(sub.code).strip()
+                else:
+                    part = 'C'; section_text = _val(sub.tests).strip()
+
+            # 取题目与rubric
+            question = db.query(Question).filter(
+                Question.assignment == payload.assignment,
+                Question.domain == payload.domain
+            ).first()
+            question_text = question.question_text if question else ""
+            rubric_text = (question.rubric or "") if question else ""
+
+            # 初始化 OpenAI 客户端
+            global client
+            if client is None:
+                api_key = os.getenv("OPENAI_API_KEY")
+                if api_key:
+                    client = OpenAI(api_key=api_key)
+
+            def _write_result_to_submission(val: bool, reason_text: str):
+                try:
+                    if part == 'A':
+                        sub.a_correct = bool(val); sub.a_reason = reason_text
+                    elif part == 'B':
+                        sub.b_correct = bool(val); sub.b_reason = reason_text
+                    else:
+                        sub.c_correct = bool(val); sub.c_reason = reason_text
+                    db.commit()
+                except Exception:
+                    db.rollback()
+
+            # 只有在配置了 API key 时才尝试评估；否则按 0 记录
+            if client is not None:
+                # 组装与 /evaluate-correctness 相同的提示（更简化即可）
+                if part == 'A':
+                    section_name = 'DESIGN_PLAN'
+                elif part == 'B':
+                    section_name = 'CODE'
+                else:
+                    section_name = 'TESTS'
+                # 与 evaluate_correctness 一致的 rubric 优先宽松说明
+                if part == 'A':
+                    guidance = ("Evaluate ONLY the Design Plan against the assignment text/rubric; "
+                                "be lenient about format; return JSON with is_correct and reason.")
+                elif part == 'B':
+                    guidance = ("Evaluate ONLY the Code for required behaviors; "
+                                "be lenient about minor pseudocode/syntax; return JSON with is_correct and reason.")
+                else:
+                    guidance = ("Evaluate ONLY the Tests for coverage required/implicit in the question; "
+                                "be lenient about naming/formatting; return JSON with is_correct and reason.")
+
+                eval_user_msg = (
+                    f"[ASSIGNMENT QUESTION]\n{question_text}\n\n"
+                    f"[{section_name}]\n{section_text}\n\n"
+                    f"{guidance}"
+                )
+                try:
+                    resp = client.chat.completions.create(
+                        model=OPENAI_MODEL,
+                        messages=[
+                            {"role": "system", "content": "You are a strict evaluator. Output JSON only with keys is_correct (boolean) and reason (string)."},
+                            {"role": "user", "content": eval_user_msg},
+                        ],
+                        temperature=0.0,
+                        response_format={"type": "json_object"},
+                    )
+                    import json
+                    content = resp.choices[0].message.content
+                    data = json.loads(content)
+                    is_correct = bool(data.get("is_correct", False))
+                    reason = str(data.get("reason", "Evaluation complete."))
+                    # 写回该 submission 的对应字段
+                    _write_result_to_submission(is_correct, reason)
+                except Exception:
+                    # 评估失败：按 0 记录
+                    _write_result_to_submission(False, "auto/silent evaluation failed")
+            else:
+                # 无可用评估客户端：按 0 记录
+                _write_result_to_submission(False, "auto/silent evaluation skipped")
+    except Exception:
+        pass
+
     return {"success": True, "confidence_level": lvl}
 
 # Confidence Level Management
