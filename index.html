@@ -101,9 +101,9 @@
             <span id="timer-a" class="text-xs font-medium text-slate-500">10:00</span>
           </div>
         </div>
-        <p class="text-slate-600">Describe your algorithm design, complexity analysis, correctness sketch, assumptions, and test plan.</p>
+        <p class="text-slate-600">Describe your algorithm design here.</p>
         <textarea id="plan" class="min-h-[300px] w-full border rounded-xl p-4 text-sm" 
-                  placeholder="Describe algorithms, complexity, correctness sketch, assumptions, and test plan..."></textarea>
+                  placeholder="Describe your algorithms"></textarea>
         <div class="flex justify-end">
           <button id="submit-part-a" class="px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:bg-slate-300 disabled:cursor-not-allowed">
             Submit Part A
@@ -120,7 +120,7 @@
             <span id="timer-b" class="text-xs font-medium text-slate-500">10:00</span>
           </div>
         </div>
-        <p class="text-slate-600">Implement your solution in Python. Make sure your code matches your design plan from Part A.</p>
+        <p class="text-slate-600">Implement your solution in Python.</p>
         <textarea id="code" class="min-h-[300px] w-full border rounded-xl p-4 font-mono text-sm" 
                   placeholder="Write your Python code here..."></textarea>
         <div class="flex justify-end">
@@ -192,7 +192,7 @@
     <div class="flex items-center gap-3">
       <button id="btn-generate" class="hidden px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">Generate AI Feedback</button>
       <span id="feedback-ready" class="hidden text-xs text-slate-500"></span>
-        <button id="btn-survey" class="hidden px-4 py-2 rounded-xl bg-purple-600 text-white hover:bg-purple-700">Complete Survey</button>
+      <button id="btn-survey" class="hidden px-4 py-2 rounded-xl bg-purple-600 text-white hover:bg-purple-700">Complete Survey</button>
         <button id="btn-next-question" class="hidden px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">Start Next Question</button>
       </div>
 
@@ -215,12 +215,26 @@
             <ul id="out-test-sugs" class="list-disc pl-5 text-slate-700 space-y-1"></ul>
           </div>
         </div>
+        <!-- Clarification area -->
+        <div id="clarify-area" class="mt-6 pt-4 border-t border-slate-200">
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-semibold text-slate-900">Need clarification?</h3>
+            <span class="text-xs text-slate-500">Meta-feedback clarifier (no solutions or code)</span>
+          </div>
+          <div class="mt-3">
+            <textarea id="clarify-input" rows="3" class="w-full border rounded-xl px-3 py-2 text-sm" placeholder="Briefly type what you don’t understand about the feedback..."></textarea>
+            <div class="flex items-center justify-end mt-2">
+              <button id="clarify-send" class="px-3 py-2 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 text-sm">Ask</button>
+            </div>
+            <div id="clarify-thread" class="mt-3 space-y-3"></div>
+          </div>
+        </div>
       </section>
       <!-- Toast -->
       <div id="toast" class="hidden fixed top-4 left-1/2 -translate-x-1/2 z-[60]">
         <div id="toast-inner" class="px-4 py-2 rounded-lg shadow bg-slate-800 text-white text-sm"></div>
       </div>
-
+      
       <!-- Success Modal -->
     <div id="success-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
       <div class="bg-white rounded-2xl border border-slate-200 shadow-soft p-6 w-full max-w-md">
@@ -269,6 +283,41 @@
           <button id="exam-resume" class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">Return to Fullscreen</button>
         </div>
       </div>
+  </div>
+
+    <!-- Pretest Modal -->
+    <div id="pretest-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-soft p-6 w-full max-w-2xl">
+        <h3 class="text-2xl font-bold mb-4">Pretest</h3>
+        <p class="text-slate-700 mb-4">Please answer all questions to continue. Your responses will be saved.</p>
+        <div id="pretest-list" class="space-y-4 max-h-[60vh] overflow-y-auto"></div>
+        <div class="mt-6 flex justify-end gap-2">
+          <button id="pretest-submit" class="px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed" disabled>Submit</button>
+        </div>
+      </div>
+  </div>
+    
+    <!-- Posttest Modal -->
+    <div id="posttest-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-soft p-6 w-full max-w-2xl">
+        <h3 class="text-2xl font-bold mb-4">Posttest</h3>
+        <p class="text-slate-700 mb-4">Please answer all questions to finish. Your responses will be saved.</p>
+        <div id="posttest-list" class="space-y-4 max-h-[60vh] overflow-y-auto"></div>
+        <div class="mt-6 flex justify-end gap-2">
+          <button id="posttest-submit" class="px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed" disabled>Submit</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Completion Modal -->
+    <div id="completion-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-soft p-6 w-full max-w-md">
+        <h3 class="text-2xl font-bold mb-2">All Tasks Completed</h3>
+        <p class="text-slate-700">Congratulations! You’ve completed all tasks. You will now be logged out automatically.</p>
+        <div class="mt-6 flex justify-end gap-2">
+          <button id="completion-ok" class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">OK</button>
+        </div>
+      </div>
     </div>
   
   <!-- Admin -->
@@ -281,23 +330,7 @@
       <button id="btn-admin-logout" class="px-4 py-2 rounded-xl border hover:bg-slate-50">Logout</button>
     </header>
 
-    <!-- Context Management Section -->
-    <section class="bg-white rounded-2xl border border-slate-200 shadow-soft p-5">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-xl font-semibold">Current Assignment/Domain Context</h2>
-        <button id="btn-set-context" class="px-4 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700">Set Context</button>
-      </div>
-      <div class="flex items-center gap-4">
-        <div class="flex items-center gap-2">
-          <label class="text-sm text-slate-600">Assignment:</label>
-          <span id="current-assignment" class="px-3 py-1 bg-blue-100 text-blue-700 rounded-lg font-medium">Assignment 1 - Group 1</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <label class="text-sm text-slate-600">Domain:</label>
-          <span id="current-domain" class="px-3 py-1 bg-green-100 text-green-700 rounded-lg font-medium">Sorting</span>
-        </div>
-      </div>
-    </section>
+    <!-- Context Management Section removed per new flow (auto-managed by app) -->
 
     <!-- AI Feedback Controls -->
     <section class="bg-white rounded-2xl border border-slate-200 shadow-soft p-5">
@@ -326,6 +359,9 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <section class="bg-white rounded-2xl border border-slate-200 shadow-soft p-5">
         <h2 id="users-title" class="text-xl font-semibold mb-4">Users</h2>
+        <div class="mb-3">
+          <button id="btn-delete-all-users" class="px-3 py-2 rounded bg-red-600 text-white hover:bg-red-700">Delete All Non‑Admin Users</button>
+        </div>
         <div id="users-list" class="space-y-2"></div>
       </section>
 
@@ -357,6 +393,81 @@
       </section>
     </div>
 
+    <!-- Pretest Management (Admin) -->
+    <section class="bg-white rounded-2xl border border-slate-200 shadow-soft p-5 mt-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-semibold">Pretest Management</h2>
+        <button id="btn-pretest-add" class="px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">Add Question</button>
+      </div>
+      <div id="pretest-admin-list" class="space-y-3"></div>
+    </section>
+
+    <!-- Posttest Management (Admin) -->
+    <section class="bg-white rounded-2xl border border-slate-200 shadow-soft p-5 mt-6">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-semibold">Posttest Management</h2>
+        <button id="btn-posttest-add" class="px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">Add Question</button>
+      </div>
+      <div id="posttest-admin-list" class="space-y-3"></div>
+    </section>
+
+    <!-- Posttest Admin Modal -->
+    <div id="posttest-admin-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-soft p-6 w-full max-w-2xl">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-2xl font-bold">Edit Posttest Question</h3>
+          <button id="posttest-admin-close" class="text-slate-500 hover:text-slate-700 text-2xl">&times;</button>
+        </div>
+        <div class="space-y-4">
+          <input type="hidden" id="post-adm-id">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Question Text</label>
+            <textarea id="post-adm-text" class="w-full border rounded-xl px-3 py-2" rows="3" placeholder="Enter question"></textarea>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Options (one per line)</label>
+            <textarea id="post-adm-options" class="w-full border rounded-xl px-3 py-2" rows="5" placeholder="Option A&#10;Option B&#10;Option C"></textarea>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Correct Option Index (0-based)</label>
+            <input id="post-adm-correct" type="number" min="0" class="w-28 border rounded-xl px-3 py-2" value="0">
+          </div>
+        </div>
+        <div class="mt-6 flex justify-end gap-2">
+          <button id="posttest-admin-cancel" class="px-4 py-2 rounded-xl border hover:bg-slate-50">Cancel</button>
+          <button id="posttest-admin-save" class="px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pretest Admin Modal -->
+    <div id="pretest-admin-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-soft p-6 w-full max-w-2xl">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-2xl font-bold">Edit Pretest Question</h3>
+          <button id="pretest-admin-close" class="text-slate-500 hover:text-slate-700 text-2xl">&times;</button>
+        </div>
+        <div class="space-y-4">
+          <input type="hidden" id="pre-adm-id">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Question Text</label>
+            <textarea id="pre-adm-text" class="w-full border rounded-xl px-3 py-2" rows="3" placeholder="Enter question"></textarea>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Options (one per line)</label>
+            <textarea id="pre-adm-options" class="w-full border rounded-xl px-3 py-2" rows="5" placeholder="Option A&#10;Option B&#10;Option C"></textarea>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Correct Option Index (0-based)</label>
+            <input id="pre-adm-correct" type="number" min="0" class="w-28 border rounded-xl px-3 py-2" value="0">
+          </div>
+        </div>
+        <div class="mt-6 flex justify-end gap-2">
+          <button id="pretest-admin-cancel" class="px-4 py-2 rounded-xl border hover:bg-slate-50">Cancel</button>
+          <button id="pretest-admin-save" class="px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">Save</button>
+        </div>
+      </div>
+    </div>
     
 
     <!-- Confidence Level Management Section -->
@@ -569,8 +680,8 @@
         if (data.tests != null) $('tests').value = data.tests;
 
         // Do not auto-show restored feedback markdown; visibility is step-aware via localStorage only
-        const rb = $('restored-block'); if (rb) rb.classList.add('hidden');
-        const rm = $('restored-md'); if (rm) rm.textContent = '';
+            const rb = $('restored-block'); if (rb) rb.classList.add('hidden');
+            const rm = $('restored-md'); if (rm) rm.textContent = '';
       } catch (e) {
         console.warn('loadDraft failed', e);
       }
@@ -620,7 +731,7 @@
 
     function getAssignmentFriendlyName() {
       const a = currentContext.assignment || '';
-      if (a === 'Assignment 1 - Group 1') return 'Problem 1: Study Session Optimizer';
+      if (a === 'Assignment 1 - Group 1') return 'Problem 1: Sorting Algorithm Implementation';
       if (a === 'Assignment 1 - Group 1 without Meta-Feedback') return 'Problem 2: Divide-and-Conquer Implementation';
       return a;
     }
@@ -652,8 +763,10 @@
 
     function updateContextDisplay() {
       if (isAdmin) {
-        $('current-assignment').textContent = currentContext.assignment;
-        $('current-domain').textContent = currentContext.domain;
+        const ca = $('current-assignment');
+        const cd = $('current-domain');
+        if (ca) ca.textContent = currentContext.assignment;
+        if (cd) cd.textContent = currentContext.domain;
       }
       const af = $('assignment-friendly');
       if (af) af.textContent = getAssignmentFriendlyName();
@@ -737,8 +850,8 @@
         if (!obj || !obj.data || !obj.part) { $('output').classList.add('hidden'); return; }
         const curr = getCurrentPartLetter();
         if (obj.part === curr) {
-          renderSuggestionsForPart(obj.data, obj.part);
-          $('output').classList.remove('hidden');
+        renderSuggestionsForPart(obj.data, obj.part);
+        $('output').classList.remove('hidden');
         } else {
           $('output').classList.add('hidden');
         }
@@ -763,17 +876,8 @@
       if (genBtn) {
         const curr = getCurrentPartLetter();
         const isCompleted = !!passedParts[curr];
-        const isSecondAssignment = currentContext.assignment === 'Assignment 1 - Group 1 without Meta-Feedback';
         const enable = !isCompleted; // Only enable on current step since button acts on current step
         if (currentStep === 1 || currentStep === 2 || currentStep === 3) {
-          if (isSecondAssignment) {
-            genBtn.disabled = true;
-            genBtn.classList.add('hidden');
-            if (readyLabel) readyLabel.classList.add('hidden');
-            // stop cooldown updates for this assignment
-            pauseFeedbackCooldownUI();
-            return;
-          }
           if (enable) {
             genBtn.disabled = false;
             genBtn.classList.remove('bg-slate-300','text-white','cursor-not-allowed');
@@ -804,9 +908,10 @@
         const raw = localStorage.getItem(getCurrentStepStorageKey());
         const val = parseInt(raw || '', 10);
         if (val === 1 || val === 2 || val === 3) {
-          if (canProceedToStep(val)) {
-            currentStep = val;
-          }
+          // Restore exactly to the last-opened step, even if not yet submitted,
+          // so refresh does not force the user back to Part A
+          currentStep = val;
+          highestStepUnlocked = Math.max(highestStepUnlocked, val);
         }
       } catch(_) {}
     }
@@ -939,7 +1044,7 @@
       examPaused = true;
       if (!examSkipNextPauseLog) {
         try { logEvent('exam_pause', currentContext.assignment, currentContext.domain, reason); } catch(_) {}
-      } else {
+            } else {
         // reset the suppression flag after skipping one pause log
         examSkipNextPauseLog = false;
       }
@@ -1139,6 +1244,23 @@
       }
       // Persist current step so refresh returns here
       persistCurrentStep();
+      // Record first-open time for this part (one-shot per user/assignment/domain)
+      try {
+        const u = (username || 'user');
+        const a = (currentContext.assignment || '').replace(/\s+/g, '_');
+        const d = (currentContext.domain || '').replace(/\s+/g, '_');
+        const key = `mf_part_opened_${u}_${a}_${d}_step_${currentStep}`;
+        if (!localStorage.getItem(key)) {
+          // Map step->part
+          const part = currentStep === 1 ? 'A' : (currentStep === 2 ? 'B' : 'C');
+          fetch(`${API_URL}/submission/part-open`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ assignment: currentContext.assignment, domain: currentContext.domain, part })
+          }).catch(()=>{});
+          localStorage.setItem(key, '1');
+        }
+      } catch(_) {}
       // Sync step-aware feedback visibility
       syncFeedbackForCurrentStep();
       // Update controls enable/disable for all steps based on current step and completion
@@ -1202,6 +1324,8 @@
         localStorage.setItem('token', token);
         localStorage.setItem('username', username);
         localStorage.setItem('isAdmin', isAdmin);
+        // Auto-clean per-user local state if this looks like a brand-new user
+        try { await ensureFreshLocalStateAfterLogin(); } catch(_) {}
         showDashboard();
       } catch (e) {
         $('auth-error').textContent = e.message;
@@ -1239,7 +1363,101 @@
       }
     }
 
+    // Auto-clean local per-user data if backend shows no history for this account (new user or re-created)
+    async function ensureFreshLocalStateAfterLogin() {
+      if (!token || !username) return;
+      // Query any existing submissions for this user
+      const res = await fetch(`${API_URL}/my-submissions`, { headers: { 'Authorization': `Bearer ${token}` } });
+      let subs = [];
+      try { subs = await res.json(); } catch(_) { subs = []; }
+      if (Array.isArray(subs) && subs.length === 0) {
+        // No server-side history → clear all mf_* keys scoped to this username to avoid stale carryover
+        clearAllLocalStateForUser(username);
+      }
+    }
+
+    function clearAllLocalStateForUser(u) {
+      try {
+        const keys = Object.keys(localStorage);
+        keys.forEach(k => {
+          // remove keys that are clearly scoped per user
+          if (
+            k.startsWith(`mf_context_${u}`) ||
+            k.includes(`_${u}_`) ||                // most per-user keys embed _<username>_
+            k.startsWith('token') ||               // old tokens
+            k.startsWith('username') ||
+            k.startsWith('isAdmin')
+          ) {
+            localStorage.removeItem(k);
+          }
+        });
+      } catch(_) {}
+      try { sessionStorage.clear(); } catch(_) {}
+      // Re-store current auth so the session continues
+      if (token) localStorage.setItem('token', token);
+      if (username) localStorage.setItem('username', username);
+      if (typeof isAdmin !== 'undefined') localStorage.setItem('isAdmin', isAdmin);
+    }
+
+    // ------- Code Editor (Part B) via CodeMirror (CDN loaded on demand) -------
+    let codeEditor = null;
+    let codeEditorReady = false;
+    function ensureCodeMirrorLoaded(callback) {
+      if (window.CodeMirror) { callback && callback(); return; }
+      const head = document.head || document.getElementsByTagName('head')[0];
+      const css = document.createElement('link');
+      css.rel = 'stylesheet';
+      css.href = 'https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.css';
+      head.appendChild(css);
+      const js = document.createElement('script');
+      js.src = 'https://cdn.jsdelivr.net/npm/codemirror@5.65.16/lib/codemirror.min.js';
+      js.onload = () => {
+        const mode = document.createElement('script');
+        mode.src = 'https://cdn.jsdelivr.net/npm/codemirror@5.65.16/mode/python/python.min.js';
+        mode.onload = () => callback && callback();
+        head.appendChild(mode);
+      };
+      head.appendChild(js);
+    }
+    function initCodeEditorOnce() {
+      if (codeEditor || !window.CodeMirror) return;
+      const ta = $('code');
+      if (!ta) return;
+      codeEditor = window.CodeMirror.fromTextArea(ta, {
+        lineNumbers: true,
+        mode: 'python',
+        indentUnit: 2,
+        tabSize: 2,
+        lineWrapping: true,
+      });
+      codeEditor.setSize('100%', 300);
+      codeEditor.on('change', () => {
+        // keep underlying textarea in sync for existing save/submit logic
+        ta.value = codeEditor.getValue();
+        try { debounceSave(); } catch(_) {}
+      });
+      codeEditorReady = true;
+    }
+    function syncEditorFromTextarea() {
+      if (codeEditor && codeEditorReady) {
+        const ta = $('code');
+        codeEditor.setValue(ta ? (ta.value || '') : '');
+      }
+    }
+    // Persist all step timers immediately
+    function persistAllTimers() {
+      try {
+        [1,2,3].forEach(s => {
+          const key = getTimerStorageKey(s);
+          const val = String(Math.max(0, timeLeft[s] | 0));
+          localStorage.setItem(key, val);
+        });
+      } catch(_) {}
+    }
+
     function logout() {
+      // Persist timers so re-login resumes from the latest remaining time
+      try { persistAllTimers(); } catch(_) {}
       // Preserve per-user state (timers, steps, cooldowns). Remove only auth keys.
       try {
         localStorage.removeItem('token');
@@ -1271,7 +1489,9 @@
         $('user-name').textContent = username;
         // Reset UI/state for user switch to avoid leaking previous user's data in DOM
         resetPerUserUIState();
-
+        // Prepare code editor for Part B
+        ensureCodeMirrorLoaded(() => { try { initCodeEditorOnce(); syncEditorFromTextarea(); } catch(_) {} });
+        
         // Restore last chosen assignment/domain for this user
         restoreCurrentContext();
         // Update display to reflect restored assignment/domain immediately
@@ -1283,8 +1503,33 @@
         loadAllTimersFromStorage();
         // Determine if timers were already consented (persisted per user+assignment+domain)
         timersEnabled = localStorage.getItem(getTimerConsentKey()) === '1';
-        if (!timersEnabled) {
+        // Pretest gate: check status + ensure there are questions; if not completed and questions exist, force pretest
+        try {
+          const [stResp, qResp] = await Promise.all([
+            fetch(`${API_URL}/pretest/status`, { headers: { 'Authorization': `Bearer ${token}` }}),
+            fetch(`${API_URL}/pretest/questions`, { headers: { 'Authorization': `Bearer ${token}` }})
+          ]);
+          const st = await stResp.json().catch(()=>({completed:false}));
+          const qs = await qResp.json().catch(()=>[]);
+          const hasQuestions = Array.isArray(qs) && qs.length > 0;
+          const needPretest = hasQuestions && !(st && st.completed);
+          if (needPretest) {
+            await showPretest();
+          } else if (!timersEnabled) {
           $('start-timer-modal').classList.remove('hidden');
+        }
+        } catch(_) {
+          // If pretest APIs fail, try loading questions alone; if any exist, force pretest
+          try {
+            const qOnly = await fetch(`${API_URL}/pretest/questions`, { headers: { 'Authorization': `Bearer ${token}` }}).then(r=>r.json());
+            const hasQ = Array.isArray(qOnly) && qOnly.length > 0;
+            if (hasQ) {
+              await showPretest();
+              return;
+            }
+          } catch(__) {}
+          // Otherwise, fall back to timer consent
+          if (!timersEnabled) $('start-timer-modal').classList.remove('hidden');
         }
         // Restore the user's last-opened step if allowed
         restoreCurrentStepFromStorage();
@@ -1298,6 +1543,8 @@
         $('btn-survey').classList.add('hidden');
         
         await loadDraft();          // <-- restore from server on entry
+        // After draft loaded, sync editor content
+        try { syncEditorFromTextarea(); } catch(_) {}
         await checkFeedbackStatus();
         
         // Log view_feedback if feedback is visible
@@ -1324,6 +1571,7 @@
       // Clear editors and outputs
       const planEl = $('plan'); if (planEl) planEl.value = '';
       const codeEl = $('code'); if (codeEl) codeEl.value = '';
+      try { if (codeEditor) codeEditor.setValue(''); } catch(_) {}
       const testsEl = $('tests'); if (testsEl) testsEl.value = '';
       const out = $('output'); if (out) out.classList.add('hidden');
       // Hide action buttons until eligibility is recomputed
@@ -1536,33 +1784,22 @@
         const data = await res.json();
         feedbackEligibility.enabled = !!data.enabled;
         feedbackEligibility.remaining = Math.max(0, (data.max_feedback || 0) - (data.feedback_count || 0));
-        // Assignment-specific override:
-        // - Assignment 1 - Group 1: always allow feedback (frontend override)
-        // - Assignment 1 - Group 1 without Meta-Feedback: always disable/hide
-        const isFirstAssignment = currentContext.assignment === 'Assignment 1 - Group 1';
-        const isSecondAssignment = currentContext.assignment === 'Assignment 1 - Group 1 without Meta-Feedback';
-        if (isSecondAssignment) {
-          $('btn-generate').classList.add('hidden');
-          $('feedback-ready').classList.add('hidden');
-          // Stop any running cooldown ticker to avoid stale label updates
-          pauseFeedbackCooldownUI();
-          return;
-        }
-        if (isFirstAssignment) {
-          // Force show and enable regardless of backend toggle
-          $('btn-generate').classList.remove('hidden');
-          $('btn-generate').classList.remove('bg-slate-300','text-white','cursor-not-allowed');
-          $('btn-generate').classList.add('bg-emerald-600');
-          $('btn-generate').disabled = false;
-          $('btn-generate').textContent = 'Generate AI Feedback';
-          // Keep cooldown behavior if timers enabled
-          if (timersEnabled) setupFeedbackCooldownIfNeeded();
-          return;
-        }
-        if (data.enabled) {
-          // Start 4-minute cooldown only after user consents to start timers
+        // Admin rule: enable only if user is enabled AND allowed_assignment matches current assignment
+        const allowed = data.allowed_assignment || null;
+        const matches = allowed ? (allowed === currentContext.assignment) : false;
+        $('btn-generate').classList.remove('hidden');
+        if (data.enabled && matches) {
+          // Do not enable feedback until the user has consented to start timers
+          if (!timersEnabled) {
+            $('btn-generate').classList.remove('bg-emerald-600');
+            $('btn-generate').classList.add('bg-slate-300','text-white','cursor-not-allowed');
+            $('btn-generate').disabled = true;
+            $('feedback-ready').classList.add('hidden');
+            return;
+          }
+          // Start cooldown only after user consents to start timers
           if (timersEnabled) {
-            setupFeedbackCooldownIfNeeded();
+          setupFeedbackCooldownIfNeeded();
           }
           // User has feedback enabled
           if (data.feedback_count >= data.max_feedback) {
@@ -1582,7 +1819,7 @@
             $('btn-generate').textContent = 'Generate AI Feedback';
           }
         } else {
-          // Disabled globally: show greyed-out button
+          // Disabled for this assignment/user: show greyed-out button and hide cooldown
           $('btn-generate').classList.remove('hidden');
           $('btn-generate').classList.remove('bg-emerald-600');
           $('btn-generate').classList.add('bg-slate-300','text-white','cursor-not-allowed');
@@ -1724,8 +1961,8 @@
       return;
     }
 
-    // RENDER: only current part suggestions
-    const part = (lastSubmittedStep === 1 ? 'A' : lastSubmittedStep === 2 ? 'B' : lastSubmittedStep === 3 ? 'C' : (currentStep === 1 ? 'A' : currentStep === 2 ? 'B' : 'C'));
+    // RENDER: only current part suggestions (do not use lastSubmittedStep to avoid stale mapping)
+    const part = (currentStep === 1 ? 'A' : currentStep === 2 ? 'B' : 'C');
     renderSuggestionsForPart(data, part);
     $('output').classList.remove('hidden');
     // Persist feedback for refresh restore
@@ -1752,6 +1989,91 @@
     $('btn-generate').textContent = 'Get Meta-Feedback Again';
   }
 }
+
+    // ----- Clarify feedback (Q&A) -----
+    function getClarifyStorageKey() {
+      const u = (username || 'user');
+      const a = (currentContext.assignment || '').replace(/\s+/g, '_');
+      const d = (currentContext.domain || '').replace(/\s+/g, '_');
+      const p = getCurrentPartLetter();
+      return `mf_clarify_${u}_${a}_${d}_part_${p}`;
+    }
+    function loadClarifyThread() {
+      try {
+        const raw = localStorage.getItem(getClarifyStorageKey());
+        const arr = JSON.parse(raw || '[]');
+        return Array.isArray(arr) ? arr : [];
+      } catch(_) { return []; }
+    }
+    function saveClarifyThread(items) {
+      try { localStorage.setItem(getClarifyStorageKey(), JSON.stringify(items || [])); } catch(_) {}
+    }
+    function renderClarifyThread() {
+      const box = $('clarify-thread'); if (!box) return;
+      const items = loadClarifyThread();
+      box.innerHTML = '';
+      items.forEach(it => {
+        const wrap = document.createElement('div');
+        wrap.className = 'rounded-lg border border-slate-200 p-3';
+        wrap.innerHTML = `
+          <div class="text-xs text-slate-500 mb-1">${new Date(it.ts || Date.now()).toLocaleString()}</div>
+          <div class="text-sm"><span class="font-semibold">You:</span> ${it.q || ''}</div>
+          ${it.a ? `<div class="text-sm mt-1"><span class="font-semibold">Clarifier:</span> ${it.a}</div>` : ''}
+        `;
+        box.appendChild(wrap);
+      });
+    }
+    function appendClarifyQA(q, a) {
+      const items = loadClarifyThread();
+      items.push({ q, a, ts: Date.now() });
+      saveClarifyThread(items);
+      renderClarifyThread();
+    }
+    async function sendClarification() {
+      const btn = $('clarify-send');
+      const ta = $('clarify-input');
+      if (!ta || !btn) return;
+      const q = (ta.value || '').trim();
+      if (!q) { showToast('Please type your question.', 'error', 1800); return; }
+      // Optimistic append question (without answer yet)
+      appendClarifyQA(q, '');
+      ta.value = '';
+      btn.disabled = true;
+      btn.textContent = 'Thinking…';
+      try {
+        const res = await fetch(`${API_URL}/feedback/clarify`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({
+            assignment: currentContext.assignment,
+            domain: currentContext.domain,
+            part: getCurrentPartLetter(),
+            question: q
+          })
+        });
+        const data = await res.json().catch(()=>({answer:'Clarification unavailable.'}));
+        if (!res.ok) {
+          showToast(data.detail || 'Clarification failed', 'error', 2200);
+          // Update last item with fallback answer
+          const items = loadClarifyThread();
+          if (items.length) { items[items.length-1].a = 'Clarification unavailable right now. Please try again later.'; saveClarifyThread(items); renderClarifyThread(); }
+          return;
+        }
+        const ans = (data && data.answer) ? String(data.answer) : 'Clarification unavailable.';
+        const items = loadClarifyThread();
+        if (items.length) { items[items.length-1].a = ans; saveClarifyThread(items); renderClarifyThread(); }
+      } catch (e) {
+        const items = loadClarifyThread();
+        if (items.length) { items[items.length-1].a = 'Clarification unavailable right now. Please try again later.'; saveClarifyThread(items); renderClarifyThread(); }
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Ask';
+      }
+    }
+    // Bind clarify button after DOM is ready
+    setTimeout(() => {
+      try { $('clarify-send')?.addEventListener('click', sendClarification); } catch(_) {}
+    }, 0);
 
     function renderList(id, arr) {
   const ul = document.getElementById(id);
@@ -1785,6 +2107,8 @@ function renderSuggestionsForPart(data, part) {
     renderList('out-test-sugs', data.test_suggestions || []);
     $('block-test').classList.remove('hidden');
   }
+  // Restore clarification thread when feedback is visible for this part
+  try { renderClarifyThread(); } catch(_) {}
 }
 
     // Admin
@@ -1794,6 +2118,8 @@ function renderSuggestionsForPart(data, part) {
       await loadQuestions(); 
       await loadConfidenceLevels(); 
       updateContextDisplay(); // Update context display for admin
+      await loadPretestAdmin();
+      await loadPosttestAdmin();
     }
 
     // Context Management Functions
@@ -1857,6 +2183,13 @@ function renderSuggestionsForPart(data, part) {
       $('plan').value = '';
       $('code').value = '';
       $('tests').value = '';
+      try {
+        if (codeEditor) {
+          codeEditor.setValue('');
+          const ta = $('code');
+          if (ta) ta.value = '';
+        }
+      } catch (_) {}
       // Hide outputs and survey/next buttons
       $('output').classList.add('hidden');
       $('btn-survey').classList.add('hidden');
@@ -1902,16 +2235,40 @@ function renderSuggestionsForPart(data, part) {
               <span class="mr-2 text-slate-500">${idx + 1}.</span>
               <span class="font-medium">${user.username}</span>
               <span class="ml-2 text-xs px-2 py-1 rounded-full ${user.feedback_enabled ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}">
-                ${user.feedback_enabled ? 'Feedback Enabled' : 'Survey Mode'}
+                ${user.feedback_enabled ? 'Enabled' : 'Disabled'}
               </span>
+              ${user.feedback_assignment ? `<span class="ml-2 text-xs px-2 py-1 rounded-full bg-indigo-100 text-indigo-700">${user.feedback_assignment}</span>` : ''}
             </div>
             <div class="flex items-center gap-3">
+              <select onchange="setUserFeedbackAssignment('${user.username}', this.value)" class="text-xs border rounded px-2 py-1">
+                <option value="">Disable Feedback</option>
+                <option value="Assignment 1 - Group 1" ${user.feedback_assignment==='Assignment 1 - Group 1'?'selected':''}>Enable on Problem 1</option>
+                <option value="Assignment 1 - Group 1 without Meta-Feedback" ${user.feedback_assignment==='Assignment 1 - Group 1 without Meta-Feedback'?'selected':''}>Enable on Problem 2</option>
+              </select>
               <button onclick="resetUserPassword('${user.username}')" class="text-xs px-2 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200">Reset Password</button>
               <button onclick="deleteUser('${user.username}')" class="text-xs px-2 py-1 rounded bg-red-100 text-red-700 hover:bg-red-200">Delete User</button>
             </div>`;
           container.appendChild(el);
         });
       } catch (e) { console.error('loadUsers', e); }
+    }
+
+    async function setUserFeedbackAssignment(username, assignment) {
+      try {
+        const res = await fetch(`${API_URL}/admin/set-feedback-assignment`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ username, assignment: assignment || null })
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(()=>({}));
+          throw new Error(err.detail || 'Failed to set feedback assignment');
+        }
+        await loadUsers();
+        showToast('✅ Updated feedback setting', 'success', 1800);
+      } catch (e) {
+        showToast('❌ ' + (e.message || 'Update failed'), 'error', 2200);
+      }
     }
 
     async function loadSubmissions() {
@@ -2400,19 +2757,37 @@ function renderSuggestionsForPart(data, part) {
     $('submit-part-a').addEventListener('click', submitPartA);
     $('submit-part-b').addEventListener('click', submitPartB);
     $('submit-part-c').addEventListener('click', submitPartC);
-    $('btn-survey').addEventListener('click', () => {
+    $('btn-survey').addEventListener('click', async () => {
       // Do not record the next pause caused by opening the external survey
       examSkipNextPauseLog = true;
       window.open('https://forms.office.com/Pages/ResponsePage.aspx?id=gcLuqKOqrk2sm5o5i5IV54_UjzNC4lpOpZ41yDeiv7FURUJQMVMzRUVDTDZOVUIyMDdPUFY5T0g1MS4u', '_blank');
       logEvent('survey_click', currentContext.assignment, currentContext.domain);
-      // After survey, allow starting the next question if available
-      const next = getNextAssignmentName(currentContext.assignment);
-      const btnNext = $('btn-next-question');
-      if (next && btnNext) btnNext.classList.remove('hidden');
+      // If this is the second assignment, show posttest (if any and not completed)
+      if (currentContext.assignment === 'Assignment 1 - Group 1 without Meta-Feedback') {
+        try {
+          const [stResp, qResp] = await Promise.all([
+            fetch(`${API_URL}/posttest/status`, { headers: { 'Authorization': `Bearer ${token}` }}),
+            fetch(`${API_URL}/posttest/questions`, { headers: { 'Authorization': `Bearer ${token}` }})
+          ]);
+          const st = await stResp.json().catch(()=>({completed:false}));
+          const qs = await qResp.json().catch(()=>[]);
+          const hasQuestions = Array.isArray(qs) && qs.length > 0;
+          const needPost = hasQuestions && !(st && st.completed);
+          if (needPost) {
+            await showPosttest();
+          }
+        } catch(_) {}
+      } else {
+        // After survey on first assignment, allow starting the next question if available
+        const next = getNextAssignmentName(currentContext.assignment);
+        const btnNext = $('btn-next-question');
+        if (next && btnNext) btnNext.classList.remove('hidden');
+      }
     });
 
     // Context Management Event Listeners
-    $('btn-set-context').addEventListener('click', showContextModal);
+    const btnSetCtx = $('btn-set-context');
+    if (btnSetCtx) btnSetCtx.addEventListener('click', showContextModal);
     $('close-context-modal').addEventListener('click', hideContextModal);
     $('cancel-context').addEventListener('click', hideContextModal);
     $('context-form').addEventListener('submit', (e) => {
@@ -2446,6 +2821,221 @@ function renderSuggestionsForPart(data, part) {
     // Confidence Level Management Event Listeners
     $('btn-refresh-confidence').addEventListener('click', loadConfidenceLevels);
     $('btn-delete-all-confidence').addEventListener('click', deleteAllConfidenceSubmissions);
+    const btnDeleteAllUsers = $('btn-delete-all-users');
+    if (btnDeleteAllUsers) {
+      btnDeleteAllUsers.addEventListener('click', async () => {
+        if (!confirm('⚠️ Delete ALL non-admin users and their data?\nThis cannot be undone.')) return;
+        try {
+          const res = await fetch(`${API_URL}/admin/users`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.detail || 'Failed to delete users');
+          showToast(`✅ Deleted ${data.deleted || 0} users`, 'success', 2200);
+          await loadUsers();
+          await loadSubmissions();
+          await loadConfidenceLevels();
+        } catch (e) {
+          showToast('❌ ' + (e.message || 'Delete all users failed'), 'error', 2200);
+        }
+      });
+    }
+
+    // ------- Pretest Admin JS -------
+    async function loadPretestAdmin() {
+      const box = $('pretest-admin-list'); if (!box) return;
+      try {
+        const res = await fetch(`${API_URL}/admin/pretest/questions`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const qs = await res.json();
+        box.innerHTML = '';
+        qs.forEach(q => {
+          const item = document.createElement('div');
+          item.className = 'p-4 border rounded-xl';
+          const opts = (q.options || []).map((o, i)=>`<li class="ml-4 list-disc">${i}. ${o}</li>`).join('');
+          item.innerHTML = `
+            <div class="flex items-start justify-between">
+              <div class="mr-4">
+                <div class="font-medium mb-1">#${q.id} ${q.question_text}</div>
+                <ul class="text-sm text-slate-700">${opts}</ul>
+                <div class="text-xs text-slate-500 mt-1">correct_index = ${q.correct_index}</div>
+              </div>
+              <div class="flex items-center gap-2">
+                <button class="text-xs px-2 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200" onclick="preAdminEdit(${q.id})">Edit</button>
+                <button class="text-xs px-2 py-1 rounded bg-red-100 text-red-700 hover:bg-red-200" onclick="preAdminDelete(${q.id})">Delete</button>
+              </div>
+            </div>`;
+          box.appendChild(item);
+        });
+      } catch (e) {
+        console.error('loadPretestAdmin', e);
+        if (box) box.innerHTML = '<div class="text-red-600">Failed to load pretest questions.</div>';
+      }
+    }
+
+    function preAdminShowModal(q) {
+      const m = $('pretest-admin-modal'); if (!m) return;
+      $('pre-adm-id').value = q ? q.id : '';
+      $('pre-adm-text').value = q ? (q.question_text || '') : '';
+      $('pre-adm-options').value = q ? (q.options || []).join('\n') : '';
+      $('pre-adm-correct').value = q ? q.correct_index : 0;
+      m.classList.remove('hidden');
+    }
+    function preAdminHideModal() {
+      const m = $('pretest-admin-modal'); if (m) m.classList.add('hidden');
+    }
+    async function preAdminEdit(id) {
+      try {
+        const qs = await fetch(`${API_URL}/admin/pretest/questions`, { headers: { 'Authorization': `Bearer ${token}` } }).then(r=>r.json());
+        const q = (qs || []).find(x => x.id === id);
+        preAdminShowModal(q || null);
+      } catch (_) { preAdminShowModal(null); }
+    }
+    async function preAdminDelete(id) {
+      if (!confirm('Delete this pretest question?')) return;
+      try {
+        const res = await fetch(`${API_URL}/admin/pretest/questions/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Delete failed');
+        await loadPretestAdmin();
+        showToast('✅ Deleted', 'success', 1800);
+      } catch (e) { showToast('❌ ' + (e.message || 'Delete failed'), 'error', 2200); }
+    }
+    async function preAdminSave() {
+      const id = $('pre-adm-id').value.trim();
+      const text = $('pre-adm-text').value.trim();
+      const opts = $('pre-adm-options').value.split('\n').map(s=>s.trim()).filter(Boolean);
+      const idx = parseInt($('pre-adm-correct').value, 10);
+      if (!text || opts.length < 2 || !(idx >=0 && idx < opts.length)) {
+        showToast('❌ Please fill question, at least 2 options, and a valid correct index', 'error', 2600);
+        return;
+      }
+      const payload = { question_text: text, options: opts, correct_index: idx };
+      try {
+        const url = id ? `${API_URL}/admin/pretest/questions/${id}` : `${API_URL}/admin/pretest/questions`;
+        const method = id ? 'PUT' : 'POST';
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(()=>({}));
+          throw new Error(err.detail || 'Save failed');
+        }
+        preAdminHideModal();
+        await loadPretestAdmin();
+        showToast('✅ Saved', 'success', 1800);
+      } catch (e) { showToast('❌ ' + (e.message || 'Save failed'), 'error', 2200); }
+    }
+
+    // Pretest admin events
+    const btnAddPre = $('btn-pretest-add');
+    if (btnAddPre) btnAddPre.addEventListener('click', () => preAdminShowModal(null));
+    const preClose = $('pretest-admin-close');
+    if (preClose) preClose.addEventListener('click', preAdminHideModal);
+    const preCancel = $('pretest-admin-cancel');
+    if (preCancel) preCancel.addEventListener('click', preAdminHideModal);
+    const preSave = $('pretest-admin-save');
+    if (preSave) preSave.addEventListener('click', preAdminSave);
+
+    // ------- Posttest Admin JS -------
+    async function loadPosttestAdmin() {
+      const box = $('posttest-admin-list'); if (!box) return;
+      try {
+        const res = await fetch(`${API_URL}/admin/posttest/questions`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const qs = await res.json();
+        box.innerHTML = '';
+        qs.forEach(q => {
+          const item = document.createElement('div');
+          item.className = 'p-4 border rounded-xl';
+          const opts = (q.options || []).map((o, i)=>`<li class="ml-4 list-disc">${i}. ${o}</li>`).join('');
+          item.innerHTML = `
+            <div class="flex items-start justify-between">
+              <div class="mr-4">
+                <div class="font-medium mb-1">#${q.id} ${q.question_text}</div>
+                <ul class="text-sm text-slate-700">${opts}</ul>
+                <div class="text-xs text-slate-500 mt-1">correct_index = ${q.correct_index}</div>
+              </div>
+              <div class="flex items-center gap-2">
+                <button class="text-xs px-2 py-1 rounded bg-blue-100 text-blue-700 hover:bg-blue-200" onclick="postAdminEdit(${q.id})">Edit</button>
+                <button class="text-xs px-2 py-1 rounded bg-red-100 text-red-700 hover:bg-red-200" onclick="postAdminDelete(${q.id})">Delete</button>
+              </div>
+            </div>`;
+          box.appendChild(item);
+        });
+      } catch (e) {
+        if (box) box.innerHTML = '<div class="text-red-600">Failed to load posttest questions.</div>';
+      }
+    }
+    function postAdminShowModal(q) {
+      const m = $('posttest-admin-modal'); if (!m) return;
+      $('post-adm-id').value = q ? q.id : '';
+      $('post-adm-text').value = q ? (q.question_text || '') : '';
+      $('post-adm-options').value = q ? (q.options || []).join('\n') : '';
+      $('post-adm-correct').value = q ? q.correct_index : 0;
+      m.classList.remove('hidden');
+    }
+    function postAdminHideModal() {
+      const m = $('posttest-admin-modal'); if (m) m.classList.add('hidden');
+    }
+    async function postAdminEdit(id) {
+      try {
+        const qs = await fetch(`${API_URL}/admin/posttest/questions`, { headers: { 'Authorization': `Bearer ${token}` } }).then(r=>r.json());
+        const q = (qs || []).find(x => x.id === id);
+        postAdminShowModal(q || null);
+      } catch (_) { postAdminShowModal(null); }
+    }
+    async function postAdminDelete(id) {
+      if (!confirm('Delete this posttest question?')) return;
+      try {
+        const res = await fetch(`${API_URL}/admin/posttest/questions/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('Delete failed');
+        await loadPosttestAdmin();
+        showToast('✅ Deleted', 'success', 1800);
+      } catch (e) { showToast('❌ ' + (e.message || 'Delete failed'), 'error', 2200); }
+    }
+    async function postAdminSave() {
+      const id = $('post-adm-id').value.trim();
+      const text = $('post-adm-text').value.trim();
+      const opts = $('post-adm-options').value.split('\n').map(s=>s.trim()).filter(Boolean);
+      const idx = parseInt($('post-adm-correct').value, 10);
+      if (!text || opts.length < 2 || !(idx >=0 && idx < opts.length)) {
+        showToast('❌ Please fill question, at least 2 options, and a valid correct index', 'error', 2600);
+        return;
+      }
+      const payload = { question_text: text, options: opts, correct_index: idx };
+      try {
+        const url = id ? `${API_URL}/admin/posttest/questions/${id}` : `${API_URL}/admin/posttest/questions`;
+        const method = id ? 'PUT' : 'POST';
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify(payload)
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(()=>({}));
+          throw new Error(err.detail || 'Save failed');
+        }
+        postAdminHideModal();
+        await loadPosttestAdmin();
+        showToast('✅ Saved', 'success', 1800);
+      } catch (e) { showToast('❌ ' + (e.message || 'Save failed'), 'error', 2200); }
+    }
+    // Posttest admin events
+    const btnAddPost = $('btn-posttest-add');
+    if (btnAddPost) btnAddPost.addEventListener('click', () => postAdminShowModal(null));
+    const postClose = $('posttest-admin-close');
+    if (postClose) postClose.addEventListener('click', postAdminHideModal);
+    const postCancel = $('posttest-admin-cancel');
+    if (postCancel) postCancel.addEventListener('click', postAdminHideModal);
+    const postSave = $('posttest-admin-save');
+    if (postSave) postSave.addEventListener('click', postAdminSave);
 
     // AI Feedback Controls (Admin)
     function setGlobalFeedbackStatus(message) {
@@ -2546,6 +3136,176 @@ function renderSuggestionsForPart(data, part) {
     $('conf-slider').addEventListener('input', () => {
       $('conf-value').textContent = $('conf-slider').value;
     });
+
+    // ------- Pretest UI -------
+    async function showPretest() {
+      const wrap = $('pretest-modal'); const list = $('pretest-list');
+      if (!wrap || !list) return;
+      // load questions
+      try {
+        const qs = await fetch(`${API_URL}/pretest/questions`, { headers: { 'Authorization': `Bearer ${token}` }}).then(r=>r.json());
+        list.innerHTML = '';
+        qs.forEach((q, idx) => {
+          const block = document.createElement('div');
+          block.className = 'p-4 border rounded-xl';
+          const name = `pre_q_${q.id}`;
+          const opts = (q.options || []).map((opt, oi) => `
+            <label class="flex items-center gap-2 mb-2">
+              <input type="radio" name="${name}" value="${oi}" class="pretest-radio">
+              <span>${opt}</span>
+            </label>`).join('');
+          block.innerHTML = `
+            <div class="font-medium mb-2">${idx+1}. ${q.question_text}</div>
+            <div>${opts}</div>
+          `;
+          list.appendChild(block);
+        });
+        // enable submit only when all answered
+        const btn = $('pretest-submit');
+        const updateDisable = () => {
+          const radios = Array.from(list.querySelectorAll('.pretest-radio'));
+          const groups = new Map();
+          radios.forEach(r => groups.set(r.name, true));
+          let allAnswered = true;
+          groups.forEach((_, g) => {
+            if (!list.querySelector(`input[name="${g}"]:checked`)) allAnswered = false;
+          });
+          btn.disabled = !allAnswered;
+        };
+        list.addEventListener('change', updateDisable);
+        updateDisable();
+        wrap.classList.remove('hidden');
+        btn.onclick = async () => {
+          // collect answers
+          const answers = [];
+          const radios = Array.from(list.querySelectorAll('.pretest-radio'));
+          const names = [...new Set(radios.map(r => r.name))];
+          names.forEach(n => {
+            const sel = list.querySelector(`input[name="${n}"]:checked`);
+            if (sel) {
+              const qid = parseInt(n.replace('pre_q_', ''), 10);
+              answers.push({ id: qid, choice_index: parseInt(sel.value, 10) });
+            }
+          });
+          try {
+            const res = await fetch(`${API_URL}/pretest/submit`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+              body: JSON.stringify({ answers })
+            });
+            if (!res.ok) {
+              const err = await res.json().catch(()=>({}));
+              throw new Error(err.detail || 'Failed to submit pretest');
+            }
+            wrap.classList.add('hidden');
+            if (!timersEnabled) $('start-timer-modal').classList.remove('hidden');
+          } catch(e) {
+            showToast('❌ ' + (e.message || 'Pretest submit failed'), 'error', 2600);
+          }
+        };
+      } catch (e) {
+        showToast('❌ Failed to load pretest', 'error', 2200);
+      }
+    }
+
+    // ------- Posttest (Student) -------
+    async function showPosttest() {
+      const wrap = $('posttest-modal'); const list = $('posttest-list');
+      if (!wrap || !list) return;
+      wrap.classList.remove('hidden');
+      list.innerHTML = '<div class="text-slate-500 text-sm">Loading...</div>';
+      try {
+        const qs = await fetch(`${API_URL}/posttest/questions`, { headers: { 'Authorization': `Bearer ${token}` }}).then(r=>r.json());
+        list.innerHTML = '';
+        if (!Array.isArray(qs) || qs.length === 0) {
+          list.innerHTML = '<div class="text-slate-500">No posttest questions configured.</div>';
+          return;
+        }
+        qs.forEach((q, qi) => {
+          const name = `post_q_${q.id}`;
+          const card = document.createElement('div');
+          card.className = 'p-4 rounded-xl border';
+          const opts = (q.options || []).map((opt, oi) => `
+            <label class="flex items-center gap-2 text-sm">
+              <input type="radio" name="${name}" value="${oi}" class="posttest-radio">
+              <span>${opt}</span>
+            </label>
+          `).join('');
+          card.innerHTML = `
+            <div class="font-medium mb-2">${qi + 1}. ${q.question_text}</div>
+            <div class="space-y-2">${opts}</div>
+          `;
+          list.appendChild(card);
+        });
+        const btn = $('posttest-submit');
+        if (btn) {
+          btn.disabled = true;
+          const enableIfAll = () => {
+            const radios = Array.from(list.querySelectorAll('.posttest-radio'));
+            // Check all groups have a checked radio
+            const groups = new Map();
+            radios.forEach(r => { const n = r.getAttribute('name'); if (!groups.has(n)) groups.set(n, []); groups.get(n).push(r); });
+            let allAnswered = true;
+            for (const rs of groups.values()) {
+              if (!rs.some(r => r.checked)) { allAnswered = false; break; }
+            }
+            btn.disabled = !allAnswered;
+          };
+          list.addEventListener('change', enableIfAll);
+          enableIfAll();
+          btn.onclick = async () => {
+            // Collect answers
+            const radios = Array.from(list.querySelectorAll('.posttest-radio'));
+            const groups = new Map();
+            radios.forEach(r => { const n = r.getAttribute('name'); if (!groups.has(n)) groups.set(n, []); groups.get(n).push(r); });
+            const answers = [];
+            for (const [name, rs] of groups.entries()) {
+              const id = parseInt(name.replace('post_q_', ''), 10);
+              const chosen = rs.find(r => r.checked);
+              if (!chosen) { showToast('Please answer all questions', 'error', 2000); return; }
+              answers.push({ id, choice_index: parseInt(chosen.value, 10) });
+            }
+            try {
+              const res = await fetch(`${API_URL}/posttest/submit`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ answers })
+              });
+              const data = await res.json().catch(()=>({}));
+              if (!res.ok) throw new Error(data.detail || 'Failed to submit posttest');
+              wrap.classList.add('hidden');
+              showCompletionLogoutModal();
+            } catch (e) {
+              showToast('❌ ' + (e.message || 'Failed to submit posttest'), 'error', 2200);
+            }
+          };
+        }
+      } catch (e) {
+        list.innerHTML = '<div class="text-red-600">Failed to load posttest</div>';
+      }
+    }
+
+    let completionLogoutTimer = null;
+    function showCompletionLogoutModal() {
+      const modal = $('completion-modal');
+      if (!modal) { logout(); return; }
+      modal.classList.remove('hidden');
+      if (completionLogoutTimer) clearTimeout(completionLogoutTimer);
+      completionLogoutTimer = setTimeout(() => {
+        completionLogoutTimer = null;
+        logout();
+      }, 4000);
+      const btn = $('completion-ok');
+      if (btn) {
+        btn.onclick = () => {
+          if (completionLogoutTimer) {
+            clearTimeout(completionLogoutTimer);
+            completionLogoutTimer = null;
+          }
+          logout();
+        };
+      }
+    }
     // Confidence modal must be completed; disabling cancel and outside-click close
     async function submitConfidenceLevel() {
       const lvl = parseInt($('conf-slider').value, 10);
@@ -2628,7 +3388,7 @@ function renderSuggestionsForPart(data, part) {
             }
             if (lastSubmittedStep) { currentStep = lastSubmittedStep; updateStepDisplay(); }
           } else {
-            showToast('❌ Incorrect or incomplete. Please revise: ' + (evData.reason || 'Needs improvement.'), 'error', 3000);
+            showToast('❌ Incorrect or incomplete. Please revise: ' + (evData.reason || 'Needs improvement.'), 'error', 15000);
             if (lastSubmittedStep) { currentStep = lastSubmittedStep; updateStepDisplay(); }
           }
         } else {
@@ -2673,6 +3433,11 @@ function renderSuggestionsForPart(data, part) {
         else examPause('exit_fullscreen');
       });
     }
+
+    // Ensure timers are saved on page exit/refresh
+    window.addEventListener('beforeunload', () => {
+      try { persistAllTimers(); } catch(_) {}
+    });
 
 
     // Enter shortcuts

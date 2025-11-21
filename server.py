@@ -71,6 +71,7 @@ class User(Base):
     is_admin = Column(Boolean, default=False)
     feedback_enabled = Column(Boolean, default=False)
     feedback_count = Column(Integer, default=0)  # Track number of feedbacks received
+    feedback_assignment = Column(String, nullable=True)  # Assignment where feedback is allowed
     created_at = Column(DateTime, default=get_pst_now)
 
 class ConfidenceIn(BaseModel):
@@ -152,6 +153,40 @@ class Question(Base):
     rubric = Column(Text, nullable=True)
     created_at = Column(DateTime, default=get_pst_now)
     updated_at = Column(DateTime, default=get_pst_now, onupdate=get_pst_now)
+
+# Pretest (admin-configured single-choice items + per-user result)
+class PretestQuestion(Base):
+    __tablename__ = "pretest_questions"
+    id = Column(Integer, primary_key=True, index=True)
+    question_text = Column(Text, nullable=False)
+    options_json = Column(Text, nullable=False)  # JSON array of strings
+    correct_index = Column(Integer, nullable=False)  # 0-based
+    created_at = Column(DateTime, default=get_pst_now)
+
+class PretestResult(Base):
+    __tablename__ = "pretest_results"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=False)
+    answers_json = Column(Text, nullable=False)  # JSON: [{id, choice_index}]
+    num_correct = Column(Integer, nullable=False)
+    completed_at = Column(DateTime, default=get_pst_now)
+
+# Posttest (admin-configured single-choice items + per-user result)
+class PosttestQuestion(Base):
+    __tablename__ = "posttest_questions"
+    id = Column(Integer, primary_key=True, index=True)
+    question_text = Column(Text, nullable=False)
+    options_json = Column(Text, nullable=False)  # JSON array of strings
+    correct_index = Column(Integer, nullable=False)  # 0-based
+    created_at = Column(DateTime, default=get_pst_now)
+
+class PosttestResult(Base):
+    __tablename__ = "posttest_results"
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=False)
+    answers_json = Column(Text, nullable=False)  # JSON: [{id, choice_index}]
+    num_correct = Column(Integer, nullable=False)
+    completed_at = Column(DateTime, default=get_pst_now)
 
 Base.metadata.create_all(bind=engine)
 
@@ -303,8 +338,30 @@ async def startup_event():
                     if "c_reason" not in col_names:
                         conn.execute(text("ALTER TABLE submissions ADD COLUMN c_reason TEXT;"))
                         print("Added 'c_reason' column to submissions")
+                    # Add per-part open/pass timestamps
+                    for col in ["a_opened_at","a_passed_at","b_opened_at","b_passed_at","c_opened_at","c_passed_at"]:
+                        if col not in col_names:
+                            conn.execute(text(f"ALTER TABLE submissions ADD COLUMN {col} TEXT;"))
+                            print(f"Added '{col}' column to submissions")
             except Exception as e:
                 print("Could not alter table for confidence_level:", e)
+
+            # Add feedback_assignment column to users if missing
+            try:
+                with engine.connect() as conn:
+                    ucols = conn.execute(text("PRAGMA table_info(users);")).fetchall()
+                    user_col_names = {c[1] for c in ucols}
+                    if "feedback_assignment" not in user_col_names:
+                        conn.execute(text("ALTER TABLE users ADD COLUMN feedback_assignment TEXT;"))
+                        print("Added 'feedback_assignment' column to users")
+            except Exception as e:
+                print("Could not alter users table for feedback_assignment:", e)
+
+            # Ensure pretest tables exist
+            try:
+                Base.metadata.create_all(bind=engine)
+            except Exception as e:
+                print("Could not create pretest tables:", e)
 
         except Exception as e:
             print("Database schema needs migration. Please delete meta_feedback.db and restart the server.")
@@ -381,6 +438,49 @@ class SubmissionResponse(BaseModel):
     confidence_level: Optional[int] = None
     timestamp: str
     has_feedback: bool = False
+
+class PretestQuestionIn(BaseModel):
+    question_text: str
+    options: list[str]
+    correct_index: int
+
+class PretestQuestionOut(BaseModel):
+    id: int
+    question_text: str
+    options: list[str]
+
+class PretestQuestionOutAdmin(PretestQuestionOut):
+    correct_index: int
+
+class PretestSubmitIn(BaseModel):
+    answers: list[dict]  # [{ "id": int, "choice_index": int }]
+
+class PretestStatusOut(BaseModel):
+    completed: bool
+    num_correct: Optional[int] = None
+    class Config:
+        from_attributes = True
+
+# Posttest schemas
+class PosttestQuestionIn(BaseModel):
+    question_text: str
+    options: list[str]
+    correct_index: int
+
+class PosttestQuestionOut(BaseModel):
+    id: int
+    question_text: str
+    options: list[str]
+
+class PosttestQuestionOutAdmin(PosttestQuestionOut):
+    correct_index: int
+
+class PosttestSubmitIn(BaseModel):
+    answers: list[dict]  # [{ "id": int, "choice_index": int }]
+
+class PosttestStatusOut(BaseModel):
+    completed: bool
+    num_correct: Optional[int] = None
     class Config:
         from_attributes = True
 
@@ -408,6 +508,15 @@ class EvaluateRequest(BaseModel):
 class EvaluateResponse(BaseModel):
     is_correct: bool
     reason: str
+class ClarifyIn(BaseModel):
+    assignment: str
+    domain: str
+    part: str  # 'A' (Plan), 'B' (Code), 'C' (Tests)
+    question: str
+
+class ClarifyOut(BaseModel):
+    answer: str
+
 
 
 
@@ -487,17 +596,19 @@ class PartSubmissionResponse(BaseModel):
     message: str
     part: str
 
+class PartOpenIn(BaseModel):
+    assignment: str
+    domain: str
+    part: str  # 'A','B','C'
+
 # LLM prompts
 SYSTEM_PROMPT = """
-You are an educational meta-feedback assistant.
-Goal: give students concrete, immediately actionable guidance that improves their Plan, Code and Tests.
-
-Rules:
-- Be specific and prescriptive; avoid vague words like "consider" or "maybe".
-- Use imperative verbs: Add, Fix, Explain, Show, Rename, Split, Cover.
-- Each suggestion should contain: Action (what to change), Example (tiny snippet or phrasing), Why (benefit/bug avoided), Check (a quick self‑test).
-- Keep tone supportive and concise; do not restate the assignment.
-- Output must be helpful even if student work is short or incomplete.
+You are an educational assistant that provides Meta‑Feedback.
+Goal: help students improve their Plan, Code, and Tests with clear, actionable guidance.
+Principles:
+- Be specific, supportive, and concise (what to change and why it helps).
+- Do NOT provide full solutions or pasteable code; prefer schematic hints.
+- For Tests, use natural language (what to cover, edge cases, expected outcomes).
 """
 
 USER_TEMPLATE = """Domain: {domain}
@@ -514,16 +625,14 @@ USER_TEMPLATE = """Domain: {domain}
 [Tests]
 {tests}
 
-Write meta‑feedback that is concrete and immediately actionable.
-For each of Plan, Code, and Tests, produce 3–5 short suggestions. Each suggestion must:
-- Start with a strong verb (Add/Fix/Explain/Show).
-- Specify exactly what to change or write (point to concept/section/line if relevant).
-- Include a tiny example/template (1 sentence or 1–2 lines of pseudo/code if helpful).
-- State briefly why this change matters or what bug/risk it removes.
-- End with a quick self‑check question.
-Avoid vague language. Keep each suggestion ≤ 3 sentences.
-
-Return ONLY valid JSON with this structure:
+Provide Meta‑Feedback only (process‑level). Focus on how to improve approach, self‑monitoring, and feedback‑seeking — not on giving the answer.
+Be actionable and concise. Do not give full solutions or pasteable code.
+For each section (Plan, Code, Tests), produce 4–7 suggestions. Each suggestion can be 2–4 sentences and may include:
+- a brief checklist or workflow to self‑check,
+- a schematic hint (no pasteable code) for direction,
+- what feedback to request next and how to verify it,
+- how to transfer the habit to future tasks.
+Return ONLY valid JSON:
 {{
   "plan_suggestions": ["string"],
   "code_suggestions": ["string"],
@@ -790,6 +899,46 @@ def submit_part(
         part=submission.part
     )
 
+# Mark part opened time (first time only)
+@app.post("/submission/part-open")
+def mark_part_open(
+    payload: PartOpenIn,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    part = payload.part
+    if part not in ['A','B','C']:
+        raise HTTPException(status_code=400, detail="part must be 'A','B', or 'C'")
+    # Find latest submission row for this user+assignment+domain or create one
+    latest = (db.query(Submission)
+                .filter(Submission.username == current_user.username,
+                        Submission.assignment == payload.assignment,
+                        Submission.domain == payload.domain)
+                .order_by(Submission.timestamp.desc())
+                .first())
+    if not latest:
+        latest = Submission(
+            username=current_user.username,
+            assignment=payload.assignment,
+            domain=payload.domain,
+            plan=None, code=None, tests=None,
+            confidence_level=None,
+            timestamp=get_pst_now()
+        )
+        db.add(latest); db.commit(); db.refresh(latest)
+    now_iso = get_pst_now().isoformat()
+    try:
+        if part == 'A' and getattr(latest, "a_opened_at", None) in (None, ''):
+            latest.a_opened_at = now_iso
+        elif part == 'B' and getattr(latest, "b_opened_at", None) in (None, ''):
+            latest.b_opened_at = now_iso
+        elif part == 'C' and getattr(latest, "c_opened_at", None) in (None, ''):
+            latest.c_opened_at = now_iso
+        db.commit()
+    except Exception:
+        db.rollback()
+    return {"success": True}
+
 
 @app.get("/submissions", response_model=List[SubmissionResponse])
 def get_all_submissions(admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
@@ -853,13 +1002,17 @@ def check_feedback_status(current_user: User = Depends(get_current_user)):
     return {
         "enabled": current_user.feedback_enabled,
         "feedback_count": current_user.feedback_count,
-        "max_feedback": 999999
+        "max_feedback": 999999,
+        "allowed_assignment": current_user.feedback_assignment
     }
 
 @app.post("/analyze", response_model=AnalyzeResponse)
 def analyze(submission: SubmissionCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     if not current_user.feedback_enabled:
         raise HTTPException(status_code=403, detail="AI feedback not enabled for your account")
+    # If admin restricted feedback to a single assignment, enforce it
+    if current_user.feedback_assignment and current_user.feedback_assignment != submission.assignment:
+        raise HTTPException(status_code=403, detail="AI feedback is disabled for this assignment")
 
     # Log analyze start
     log_event(db, current_user.id, "analyze_start", submission.assignment, submission.domain)
@@ -953,16 +1106,23 @@ def evaluate_correctness(payload: EvaluateRequest, current_user: User = Depends(
         section_text = (payload.plan or '').strip()
         if rubric_text:
             guidance = (
-                "Evaluate ONLY the Design Plan against the following rubric; do not add extra criteria. "
-                "Treat listing of detailed key steps/phases and enumerating edge cases/assumptions as OPTIONAL (do not require them for a correct verdict). "
+                "Evaluate ONLY the Design Plan against the following rubric (do not add unrelated criteria). "
+                "If the rubric enumerates points, the plan should address these ideas, but it does NOT need to list them verbatim or as headings. "
+                "Accept concise narrative that clearly conveys them; allow equivalent phrasing and combined sentences. "
+                "For typical DP prompts, look for: (1) chosen approach and why, (2) state definition (what each DP entry means), "
+                "(3) how a state depends on smaller ones / what choices are compared, (4) base conditions, and (5) which DP entry or call yields the final result. "
+                "If one minor item is implicit yet obvious from context, still mark is_correct=true. "
+                "Mark is_correct=false only when core elements are missing or incorrect (e.g., no state definition and no dependency logic), not for formatting. "
+                "Additionally, if the answer voluntarily states time/space complexity and it is materially incorrect or contradicts the described design, set is_correct=false even if complexity is not explicitly required by the rubric."
                 f"\n{rubric_text}\n"
-                "Mark is_correct=true if the core approach/method requested by the question is present with a brief rationale. "
-                "Only set is_correct=false when the core requested item(s) are clearly missing; be lenient about format and optional details."
             )
         else:
             guidance = (
-                "Evaluate ONLY against explicit requirements stated in the assignment question text; do not require items that are not explicitly requested. "
-                "Be lenient about format/wording; only mark false when clear required items are absent."
+                "Evaluate ONLY against explicit requirements stated in the assignment text; do not require items that are not explicitly requested. "
+                "If the prompt lists points, the plan should address these ideas; explicit headings are NOT required. "
+                "Accept clear narrative coverage and equivalent phrasing; be lenient on format and wording. "
+                "Mark false only when core elements are missing or wrong; do not fail for minor omissions if intent is clear overall. "
+                "If the answer voluntarily states time/space complexity and it is materially incorrect or contradicts the design, set is_correct=false."
             )
     elif payload.part == 'B':
         section_name = 'CODE'
@@ -983,14 +1143,26 @@ def evaluate_correctness(payload: EvaluateRequest, current_user: User = Depends(
         section_text = (payload.tests or '').strip()
         if rubric_text:
             guidance = (
-                "Evaluate ONLY the Tests against rubric-specified coverage; do not require cases not listed by rubric: "
+                "Evaluate ONLY the Tests for coverage intent against the rubric; accept natural-language test descriptions. "
+                "Do not require executable code, exact names, or specific formatting. "
                 f"\n{rubric_text}\n"
-                "If rubric lists concrete cases, require those; otherwise judge reasonable coverage and mark true if core cases are present (be lenient about naming/formatting)."
+                "If the rubric lists concrete cases, accept any clear mention/description of those cases (even if summarized). "
+                "If the rubric is high-level, judge reasonable coverage: at least typical + boundary (e.g., empty/smallest, normal, and an error/edge) is sufficient. "
+                "A concise bullet list that only names scenarios (e.g., 'ascending', 'descending', 'duplicates', 'random', 'empty', 'single') counts as coverage; "
+                "do NOT require expected outputs to be written explicitly. "
+                "For stability, any explicit mention such as 'stability', 'stable', 'ties keep original order', or an example like 'A before C for equal keys' is sufficient to satisfy the stability check; "
+                "do NOT require an executable assertion. "
+                "Mark is_correct=true when the submission signals these core scenarios, even if the wording is brief."
             )
         else:
             guidance = (
-                "Evaluate ONLY the Tests versus explicitly requested coverage in the assignment text; do not require unstated cases. "
-                "Be LENIENT if coverage is reasonably aligned with the question; mark true even if naming/formatting is imperfect."
+                "Evaluate ONLY the Tests versus explicitly requested/implicit coverage in the assignment text; do not require unstated extras. "
+                "Accept natural-language test descriptions. Be VERY LENIENT about naming/formatting; do not require code. "
+                "A concise list of scenario names (e.g., 'ascending', 'descending', 'duplicates', 'random', 'empty', 'single') is sufficient to count as covered; "
+                "do NOT require explicit expected outputs. "
+                "For stability, any explicit mention such as 'stability', 'stable', 'ties keep original order', or an example like 'A before C for equal keys' is sufficient; "
+                "do NOT require an executable assertion. "
+                "Mark true if the answer, in spirit, covers typical, boundary, and at least one edge/error case, even briefly."
             )
 
     eval_user_msg = (
@@ -1030,12 +1202,18 @@ def evaluate_correctness(payload: EvaluateRequest, current_user: User = Depends(
                 if payload.part == 'A':
                     latest.a_correct = is_correct
                     latest.a_reason = reason
+                    if is_correct and getattr(latest, "a_passed_at", None) in (None, ''):
+                        latest.a_passed_at = get_pst_now().isoformat()
                 elif payload.part == 'B':
                     latest.b_correct = is_correct
                     latest.b_reason = reason
+                    if is_correct and getattr(latest, "b_passed_at", None) in (None, ''):
+                        latest.b_passed_at = get_pst_now().isoformat()
                 else:
                     latest.c_correct = is_correct
                     latest.c_reason = reason
+                    if is_correct and getattr(latest, "c_passed_at", None) in (None, ''):
+                        latest.c_passed_at = get_pst_now().isoformat()
                 db.commit()
         except Exception as _:
             # Non-fatal: continue returning the response
@@ -1046,6 +1224,116 @@ def evaluate_correctness(payload: EvaluateRequest, current_user: User = Depends(
         # Graceful failure: do not 500; return not-correct with reason
         return EvaluateResponse(is_correct=False, reason=f"Evaluation error: {e}")
 
+def _sanitize_meta_text(text: str) -> str:
+    """Remove any code blocks or obvious code-like content to enforce meta-feedback only."""
+    if not text:
+        return ""
+    # Strip triple backtick code blocks
+    out_lines = []
+    in_block = False
+    for line in text.splitlines():
+        if line.strip().startswith("```"):
+            in_block = not in_block
+            continue
+        if in_block:
+            continue
+        out_lines.append(line)
+    text = "\n".join(out_lines)
+    # Remove lines that look like code definitions
+    blocked_prefixes = ("def ", "class ", "#include", "public ", "private ", "function ", "for (", "while (", "if (", "else {", "try {")
+    filtered = []
+    for line in text.splitlines():
+        if any(line.strip().startswith(p) for p in blocked_prefixes):
+            continue
+        filtered.append(line)
+    text = "\n".join(filtered)
+    # Hard-limit length and normalize whitespace
+    text = " ".join(text.split())
+    return text[:1200]
+
+@app.post("/feedback/clarify", response_model=ClarifyOut)
+def clarify_feedback(
+    payload: ClarifyIn,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Answer a student's clarification about prior meta‑feedback without giving solutions."""
+    # Enforce same gating as feedback generation (per-user, per-assignment)
+    if not current_user.feedback_enabled:
+        raise HTTPException(status_code=403, detail="AI feedback not enabled for your account")
+    if current_user.feedback_assignment and current_user.feedback_assignment != payload.assignment:
+        raise HTTPException(status_code=403, detail="AI feedback is disabled for this assignment")
+    if payload.part not in ("A","B","C"):
+        raise HTTPException(status_code=400, detail="part must be 'A', 'B', or 'C'")
+
+    # Gather context: question/rubric + latest student draft + last feedback shown
+    q = db.query(Question).filter(
+        Question.assignment == payload.assignment,
+        Question.domain == payload.domain
+    ).first()
+    question_text = q.question_text if q else ""
+    rubric_text = (q.rubric or "") if q else ""
+
+    d = db.query(Draft).filter(
+        Draft.user_id == current_user.id,
+        Draft.assignment == payload.assignment,
+        Draft.domain == payload.domain
+    ).first()
+    plan = d.plan if d and d.plan else ""
+    code = d.code if d and d.code else ""
+    tests = d.tests if d and d.tests else ""
+    prior_feedback = d.feedback_md if d and d.feedback_md else ""
+
+    # Initialize OpenAI client
+    global client
+    if client is None:
+        api_key = os.getenv("OPENAI_API_KEY")
+        if not api_key:
+            # Fallback graceful response
+            return ClarifyOut(answer="The clarification service is not configured. Please contact your instructor.")
+        client = OpenAI(api_key=api_key)
+
+    # Build strict meta‑feedback clarifier prompt
+    system_prompt = (
+        "You are a Meta‑Feedback Clarifier. Your job is to clarify previous meta‑feedback so the student can self‑correct.\n"
+        "Absolute constraints (never violate):\n"
+        "- No final pseudocode or pasteable code.\n"
+        "- No step‑by‑step full solution.\n"
+        "- No telling which algorithm to use or naming the algorithm as the answer.\n"
+        "- Do NOT explain the solution; instead, guide thinking with questions, checks, and process hints.\n"
+        "Style: 2–5 sentences. Be specific, supportive, and point to what to check next. Encourage self‑verification."
+    )
+    user_prompt = (
+        f"Domain: {payload.domain}\n\n"
+        f"[ASSIGNMENT QUESTION] (context; do not reveal or restate)\n{question_text}\n\n"
+        f"[RUBRIC] (for evaluator alignment)\n{rubric_text}\n\n"
+        f"[STUDENT_WORK]\n"
+        f"Plan:\n{plan}\n\nCode:\n{code}\n\nTests:\n{tests}\n\n"
+        f"[META_FEEDBACK_SHOWN]\n{prior_feedback}\n\n"
+        f"[STUDENT_CLARIFY_QUESTION]\n{payload.question}\n\n"
+        "Respond with meta‑feedback clarification ONLY (no solutions, no algorithms, no code)."
+    )
+    try:
+        resp = client.chat.completions.create(
+            model=OPENAI_MODEL,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+            ],
+            temperature=0.2,
+            max_tokens=400,
+        )
+        content = (resp.choices[0].message.content or "").strip()
+    except Exception as e:
+        return ClarifyOut(answer=f"Clarification temporarily unavailable: {e}")
+
+    safe = _sanitize_meta_text(content)
+    # Log event (without storing full content)
+    try:
+        log_event(db, current_user.id, "feedback_clarify", payload.assignment, payload.domain, details=f"part={payload.part}, qlen={len(payload.question)}")
+    except Exception:
+        pass
+    return ClarifyOut(answer=safe if safe else "Here is a meta‑level way to proceed: identify what the feedback asks you to verify, pick one check to run, and describe how your current work satisfies or fails it. Then adjust just that part and re‑evaluate before moving on.")
 @app.get("/admin/health-evaluator")
 def get_users_healthcheck(admin: User = Depends(get_admin_user)):
     try:
@@ -1073,7 +1361,240 @@ def get_users_healthcheck(admin: User = Depends(get_admin_user)):
 @app.get("/users")
 def get_users(admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
     users = db.query(User).all()
-    return [{"username": u.username, "is_admin": u.is_admin, "feedback_enabled": u.feedback_enabled} for u in users]
+    return [{"username": u.username, "is_admin": u.is_admin, "feedback_enabled": u.feedback_enabled, "feedback_assignment": u.feedback_assignment} for u in users]
+
+class FeedbackAssignmentToggle(BaseModel):
+    username: str
+    assignment: Optional[str] = None  # None disables feedback
+
+@app.post("/admin/set-feedback-assignment")
+def set_feedback_assignment(payload: FeedbackAssignmentToggle, admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
+    u = db.query(User).filter(User.username == payload.username).first()
+    if not u:
+        raise HTTPException(status_code=404, detail="User not found")
+    # If assignment provided, enable feedback and bind to that assignment; otherwise disable entirely
+    if payload.assignment and payload.assignment.strip():
+        u.feedback_enabled = True
+        u.feedback_assignment = payload.assignment.strip()
+    else:
+        u.feedback_enabled = False
+        u.feedback_assignment = None
+    db.commit()
+    return {"success": True, "username": u.username, "feedback_enabled": u.feedback_enabled, "feedback_assignment": u.feedback_assignment}
+
+# ---------- Pretest Endpoints ----------
+from json import dumps as _json_dumps, loads as _json_loads
+
+@app.get("/pretest/questions", response_model=List[PretestQuestionOut])
+def get_pretest_questions(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    rows = db.query(PretestQuestion).order_by(PretestQuestion.id.asc()).all()
+    out: List[PretestQuestionOut] = []
+    for q in rows:
+        try:
+            opts = _json_loads(q.options_json)
+        except Exception:
+            opts = []
+        out.append(PretestQuestionOut(id=q.id, question_text=q.question_text, options=opts))
+    return out
+
+@app.get("/pretest/status", response_model=PretestStatusOut)
+def get_pretest_status(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    res = (db.query(PretestResult)
+             .filter(PretestResult.user_id == current_user.id)
+             .order_by(PretestResult.completed_at.desc())
+             .first())
+    if not res:
+        return PretestStatusOut(completed=False)
+    return PretestStatusOut(completed=True, num_correct=res.num_correct)
+
+@app.post("/pretest/submit", response_model=PretestStatusOut)
+def submit_pretest(payload: PretestSubmitIn, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    # Load questions
+    questions = {q.id: q for q in db.query(PretestQuestion).all()}
+    num_correct = 0
+    total = len(questions)
+    for a in payload.answers:
+        qid = int(a.get("id"))
+        choice = int(a.get("choice_index"))
+        q = questions.get(qid)
+        if q and choice == q.correct_index:
+            num_correct += 1
+    res = PretestResult(
+        user_id=current_user.id,
+        answers_json=_json_dumps(payload.answers),
+        num_correct=num_correct,
+        completed_at=get_pst_now()
+    )
+    db.add(res); db.commit()
+    # Also record a synthetic row in submissions for unified export
+    try:
+        summary = f"Pretest: {num_correct}/{total} correct"
+        sub_row = Submission(
+            username=current_user.username,
+            assignment="Pretest",
+            domain="Assessment",
+            plan=summary,
+            code=None,
+            tests=_json_dumps({"answers": payload.answers, "num_correct": num_correct, "total": total}),
+            confidence_level=None,
+            timestamp=get_pst_now()
+        )
+        db.add(sub_row); db.commit()
+        try:
+            log_event(db, current_user.id, "pretest_submit_recorded", assignment="Pretest", domain="Assessment", details=summary)
+        except Exception:
+            pass
+    except Exception:
+        db.rollback()
+    return PretestStatusOut(completed=True, num_correct=num_correct)
+
+# Admin CRUD for pretest questions
+@app.get("/admin/pretest/questions", response_model=List[PretestQuestionOutAdmin])
+def admin_get_pretest(admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
+    rows = db.query(PretestQuestion).order_by(PretestQuestion.id.asc()).all()
+    out: List[PretestQuestionOutAdmin] = []
+    for q in rows:
+        try:
+            opts = _json_loads(q.options_json)
+        except Exception:
+            opts = []
+        out.append(PretestQuestionOutAdmin(id=q.id, question_text=q.question_text, options=opts, correct_index=q.correct_index))
+    return out
+
+@app.post("/admin/pretest/questions", response_model=PretestQuestionOutAdmin)
+def admin_create_pretest(q: PretestQuestionIn, admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
+    if not q.options or q.correct_index < 0 or q.correct_index >= len(q.options):
+        raise HTTPException(status_code=400, detail="Invalid options or correct_index")
+    row = PretestQuestion(question_text=q.question_text, options_json=_json_dumps(q.options), correct_index=q.correct_index)
+    db.add(row); db.commit(); db.refresh(row)
+    return PretestQuestionOutAdmin(id=row.id, question_text=row.question_text, options=q.options, correct_index=row.correct_index)
+
+@app.put("/admin/pretest/questions/{qid}", response_model=PretestQuestionOutAdmin)
+def admin_update_pretest(qid: int, q: PretestQuestionIn, admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
+    row = db.query(PretestQuestion).filter(PretestQuestion.id == qid).first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Not found")
+    if not q.options or q.correct_index < 0 or q.correct_index >= len(q.options):
+        raise HTTPException(status_code=400, detail="Invalid options or correct_index")
+    row.question_text = q.question_text
+    row.options_json = _json_dumps(q.options)
+    row.correct_index = q.correct_index
+    db.commit(); db.refresh(row)
+    return PretestQuestionOutAdmin(id=row.id, question_text=row.question_text, options=_json_loads(row.options_json), correct_index=row.correct_index)
+
+@app.delete("/admin/pretest/questions/{qid}")
+def admin_delete_pretest(qid: int, admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
+    row = db.query(PretestQuestion).filter(PretestQuestion.id == qid).first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Not found")
+    db.delete(row); db.commit()
+    return {"success": True}
+
+# ---------- Posttest Endpoints ----------
+@app.get("/posttest/questions", response_model=List[PosttestQuestionOut])
+def get_posttest_questions(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    rows = db.query(PosttestQuestion).order_by(PosttestQuestion.id.asc()).all()
+    out: List[PosttestQuestionOut] = []
+    for q in rows:
+        try:
+            opts = _json_loads(q.options_json)
+        except Exception:
+            opts = []
+        out.append(PosttestQuestionOut(id=q.id, question_text=q.question_text, options=opts))
+    return out
+
+@app.get("/posttest/status", response_model=PosttestStatusOut)
+def get_posttest_status(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    res = (db.query(PosttestResult)
+             .filter(PosttestResult.user_id == current_user.id)
+             .order_by(PosttestResult.completed_at.desc())
+             .first())
+    if not res:
+        return PosttestStatusOut(completed=False)
+    return PosttestStatusOut(completed=True, num_correct=res.num_correct)
+
+@app.post("/posttest/submit", response_model=PosttestStatusOut)
+def submit_posttest(payload: PosttestSubmitIn, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    # Load questions
+    questions = {q.id: q for q in db.query(PosttestQuestion).all()}
+    num_correct = 0
+    total = len(questions)
+    for a in payload.answers:
+        qid = int(a.get("id"))
+        choice = int(a.get("choice_index"))
+        q = questions.get(qid)
+        if q and choice == q.correct_index:
+            num_correct += 1
+    res = PosttestResult(
+        user_id=current_user.id,
+        answers_json=_json_dumps(payload.answers),
+        num_correct=num_correct,
+        completed_at=get_pst_now()
+    )
+    db.add(res); db.commit()
+    # Also record a synthetic row in submissions for unified export
+    try:
+        summary = f"Posttest: {num_correct}/{total} correct"
+        sub_row = Submission(
+            username=current_user.username,
+            assignment="Posttest",
+            domain="Assessment",
+            plan=summary,
+            code=None,
+            tests=_json_dumps({"answers": payload.answers, "num_correct": num_correct, "total": total}),
+            confidence_level=None,
+            timestamp=get_pst_now()
+        )
+        db.add(sub_row); db.commit()
+        try:
+            log_event(db, current_user.id, "posttest_submit_recorded", assignment="Posttest", domain="Assessment", details=summary)
+        except Exception:
+            pass
+    except Exception:
+        db.rollback()
+    return PosttestStatusOut(completed=True, num_correct=num_correct)
+
+# Admin CRUD for posttest questions
+@app.get("/admin/posttest/questions", response_model=List[PosttestQuestionOutAdmin])
+def admin_get_posttest(admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
+    rows = db.query(PosttestQuestion).order_by(PosttestQuestion.id.asc()).all()
+    out: List[PosttestQuestionOutAdmin] = []
+    for q in rows:
+        try:
+            opts = _json_loads(q.options_json)
+        except Exception:
+            opts = []
+        out.append(PosttestQuestionOutAdmin(id=q.id, question_text=q.question_text, options=opts, correct_index=q.correct_index))
+    return out
+
+@app.post("/admin/posttest/questions", response_model=PosttestQuestionOutAdmin)
+def admin_create_posttest(q: PosttestQuestionIn, admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
+    if not q.options or q.correct_index < 0 or q.correct_index >= len(q.options):
+        raise HTTPException(status_code=400, detail="Invalid options or correct_index")
+    row = PosttestQuestion(question_text=q.question_text, options_json=_json_dumps(q.options), correct_index=q.correct_index)
+    db.add(row); db.commit(); db.refresh(row)
+    return PosttestQuestionOutAdmin(id=row.id, question_text=row.question_text, options=q.options, correct_index=row.correct_index)
+
+@app.put("/admin/posttest/questions/{qid}", response_model=PosttestQuestionOutAdmin)
+def admin_update_posttest(qid: int, q: PosttestQuestionIn, admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
+    row = db.query(PosttestQuestion).filter(PosttestQuestion.id == qid).first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Not found")
+    if not q.options or q.correct_index < 0 or q.correct_index >= len(q.options):
+        raise HTTPException(status_code=400, detail="Invalid options or correct_index")
+    row.question_text = q.question_text
+    row.options_json = _json_dumps(q.options)
+    row.correct_index = q.correct_index
+    db.commit(); db.refresh(row)
+    return PosttestQuestionOutAdmin(id=row.id, question_text=row.question_text, options=_json_loads(row.options_json), correct_index=row.correct_index)
+
+@app.delete("/admin/posttest/questions/{qid}")
+def admin_delete_posttest(qid: int, admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
+    row = db.query(PosttestQuestion).filter(PosttestQuestion.id == qid).first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Not found")
+    db.delete(row); db.commit()
+    return {"success": True}
 
 # Draft History & Event Logging 
 @app.get("/draft-history", response_model=List[DraftHistoryResponse])
@@ -1256,12 +1777,50 @@ def delete_user(username: str, admin: User = Depends(get_admin_user), db: Sessio
     db.query(Feedback).filter(Feedback.user_id == user.id).delete()
     db.query(DraftHistory).filter(DraftHistory.user_id == user.id).delete()
     db.query(EventLog).filter(EventLog.user_id == user.id).delete()
+    # Pretest/Posttest results
+    try:
+        db.query(PretestResult).filter(PretestResult.user_id == user.id).delete()
+    except Exception:
+        pass
+    try:
+        db.query(PosttestResult).filter(PosttestResult.user_id == user.id).delete()
+    except Exception:
+        pass
     
     # Delete the user
     db.delete(user)
     db.commit()
     
     return {"success": True, "message": f"User '{username}' and all related data deleted successfully"}
+
+@app.delete("/admin/users")
+def delete_all_non_admin_users(admin: User = Depends(get_admin_user), db: Session = Depends(get_db)):
+    """Delete ALL non-admin users and their related data (admin only)"""
+    # Collect non-admin users
+    users = db.query(User).filter(User.is_admin == False).all()
+    user_ids = [u.id for u in users]
+    usernames = [u.username for u in users]
+    if not users:
+        return {"success": True, "deleted": 0}
+    # Delete related rows by user ids/usernames
+    if usernames:
+        db.query(Submission).filter(Submission.username.in_(usernames)).delete(synchronize_session=False)
+    if user_ids:
+        db.query(Draft).filter(Draft.user_id.in_(user_ids)).delete(synchronize_session=False)
+        db.query(Feedback).filter(Feedback.user_id.in_(user_ids)).delete(synchronize_session=False)
+        db.query(DraftHistory).filter(DraftHistory.user_id.in_(user_ids)).delete(synchronize_session=False)
+        db.query(EventLog).filter(EventLog.user_id.in_(user_ids)).delete(synchronize_session=False)
+        try:
+            db.query(PretestResult).filter(PretestResult.user_id.in_(user_ids)).delete(synchronize_session=False)
+        except Exception:
+            pass
+        try:
+            db.query(PosttestResult).filter(PosttestResult.user_id.in_(user_ids)).delete(synchronize_session=False)
+        except Exception:
+            pass
+        db.query(User).filter(User.id.in_(user_ids)).delete(synchronize_session=False)
+    db.commit()
+    return {"success": True, "deleted": len(user_ids)}
 
 
 @app.post("/admin/reset-password")
@@ -1420,16 +1979,24 @@ def set_confidence(
                     section_name = 'CODE'
                 else:
                     section_name = 'TESTS'
-                # Keep rubric leniency aligned with evaluate_correctness
+                # Keep rubric alignment with evaluate_correctness
                 if part == 'A':
-                    guidance = ("Evaluate ONLY the Design Plan against the assignment text/rubric; "
-                                "be lenient about format; return JSON with is_correct and reason.")
+                    guidance = ("Evaluate ONLY the Design Plan against the assignment text/rubric. "
+                                "If the rubric lists items, the plan should address those ideas, but does NOT need verbatim headings. "
+                                "Accept clear narrative coverage, equivalent phrasing, and combined sentences; be lenient on format. "
+                                "Look for: approach+why, state definition, dependency/choices, base conditions, final result entry. "
+                                "If one minor item is implicit yet obvious from context, still mark true; mark false only when core elements are missing or incorrect. "
+                                "If the answer voluntarily states time/space complexity and it is materially incorrect or contradicts the design, set is_correct=false even if complexity is not explicitly required. "
+                                "Return JSON with is_correct and reason.")
                 elif part == 'B':
                     guidance = ("Evaluate ONLY the Code for required behaviors; "
                                 "be lenient about minor pseudocode/syntax; return JSON with is_correct and reason.")
                 else:
-                    guidance = ("Evaluate ONLY the Tests for coverage required/implicit in the question; "
-                                "be lenient about naming/formatting; return JSON with is_correct and reason.")
+                    guidance = ("Evaluate ONLY the Tests for coverage intent; accept natural-language descriptions and concise bullet lists of scenario names. "
+                                "Be VERY LENIENT about naming/formatting and do not require code or explicit expected outputs. "
+                                "If scenarios like 'ascending', 'descending', 'duplicates', 'random', 'empty', 'single' are named, treat them as covered. "
+                                "For stability, any explicit mention such as 'stability', 'stable', 'ties keep original order', or an example 'A before C for equal keys' is sufficient; do NOT require assertions. "
+                                "Mark true if typical + boundary + one edge/error case are indicated, even briefly; return JSON with is_correct and reason.")
 
                 eval_user_msg = (
                     f"[ASSIGNMENT QUESTION]\n{question_text}\n\n"
@@ -1452,6 +2019,19 @@ def set_confidence(
                     is_correct = bool(data.get("is_correct", False))
                     reason = str(data.get("reason", "Evaluation complete."))
                     _write_result_to_submission(is_correct, reason)
+                    # add pass timestamps
+                    try:
+                        if is_correct:
+                            now_iso = get_pst_now().isoformat()
+                            if part == 'A' and getattr(sub, "a_passed_at", None) in (None, ''):
+                                sub.a_passed_at = now_iso
+                            elif part == 'B' and getattr(sub, "b_passed_at", None) in (None, ''):
+                                sub.b_passed_at = now_iso
+                            elif part == 'C' and getattr(sub, "c_passed_at", None) in (None, ''):
+                                sub.c_passed_at = now_iso
+                            db.commit()
+                    except Exception:
+                        db.rollback()
                 except Exception:
                     # Evaluation failed: record as 0
                     _write_result_to_submission(False, "auto/silent evaluation failed")
